@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+build/
+dist/
+
+# Tooling
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.hypothesis/
+.coverage
+coverage.xml
+htmlcov/
+
+# Local data: never commit audio or personal listening history
+data/
+*.wav
+*.flac
+*.mp3
+*.ogg
+*.sqlite
+*.db
+
+# Benchmark outputs (figures under docs/figures are committed explicitly)
+results/
+
+# Editors / OS
+.idea/
+.vscode/
+.DS_Store
