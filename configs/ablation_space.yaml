@@ -1,0 +1,12 @@
+# Ablation: does a smooth 5-D DCT basis beat searching the 10 bands directly?
+name: ablation_space
+seeds: 10
+n_comparisons: 60
+eval_every: 10
+context_dim: 2
+n_tracks: 10
+n_eval_contexts: 6
+n_heldout_pairs: 300
+models:
+  - {name: gp, kind: gp}
+  - {name: gp_dct, kind: gp, space: {kind: dct, n_components: 5}}
