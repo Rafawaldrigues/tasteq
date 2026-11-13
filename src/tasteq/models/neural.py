@@ -31,6 +31,13 @@ class NeuralBradleyTerry(PreferenceModel):
     members is the uncertainty estimate. Ties use a soft label of 0.5 and
     weights scale each comparison's loss, so weak feedback counts less.
 
+    Regularization matters a lot with this little data. Nearly separable
+    comparisons push Bradley–Terry logits towards infinity, so a Gaussian
+    prior on utilities (``prior_weight``) keeps them on a plausible scale.
+    Weight decay is decoupled (AdamW): with plain Adam, L2 dominates the
+    normalized step once the data gradient is small and collapses the network
+    to a constant.
+
     The challenger is chosen by Thompson sampling: draw one member at random
     and take its argmax inside the trust region.
     """
@@ -47,8 +54,9 @@ class NeuralBradleyTerry(PreferenceModel):
         hidden: int = 64,
         epochs: int = 200,
         learning_rate: float = 1e-2,
-        weight_decay: float = 1e-2,
+        weight_decay: float = 1e-4,
         n_challenger_candidates: int = 2048,
+        prior_weight: float = 0.05,
     ) -> None:
         super().__init__(space, context_dim, seed, trust_region)
         self.n_members = n_members
@@ -57,6 +65,7 @@ class NeuralBradleyTerry(PreferenceModel):
         self.learning_rate = learning_rate
         self.weight_decay = weight_decay
         self.n_challenger_candidates = n_challenger_candidates
+        self.prior_weight = prior_weight
         self.members: list[nn.Sequential] = []
         self._offsets = np.zeros(0)
 
@@ -79,16 +88,18 @@ class NeuralBradleyTerry(PreferenceModel):
             torch.manual_seed(int(torch.randint(0, 2**31 - 1, (1,), generator=generator)))
             member = _mlp(self.dim + self.context_dim, self.hidden)
             sample = torch.randint(0, n, (n,), generator=generator)  # bootstrap
-            optimizer = torch.optim.Adam(
+            optimizer = torch.optim.AdamW(
                 member.parameters(), lr=self.learning_rate, weight_decay=self.weight_decay
             )
             for _ in range(self.epochs):
                 optimizer.zero_grad()
-                logits = (member(a[sample]) - member(b[sample])).squeeze(-1)
+                fa, fb = member(a[sample]).squeeze(-1), member(b[sample]).squeeze(-1)
                 loss = nn.functional.binary_cross_entropy_with_logits(
-                    logits, labels[sample], weight=weights[sample]
+                    fa - fb, labels[sample], weight=weights[sample]
                 )
-                loss.backward()  # type: ignore[no-untyped-call]
+                # Gaussian prior on utilities, f ~ N(0, 1 / (2 * prior_weight)).
+                loss = loss + self.prior_weight * (fa.square().mean() + fb.square().mean())
+                loss.backward()
                 optimizer.step()
             member.eval()
             self.members.append(member)
