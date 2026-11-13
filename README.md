@@ -9,8 +9,9 @@ playing.
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 ![Python](https://img.shields.io/badge/python-3.11%20%7C%203.12-blue)
 
-> **Status:** early development. The loudness-matched DSP core is done; models
-> and the benchmark are next. See the [roadmap](#roadmap).
+> **Status:** active development. The DSP core, three preference models, the
+> simulated-listener benchmark and the calibrate/listen CLI work; benchmark
+> figures and the interactive demo are next. See the [roadmap](#roadmap).
 
 ## Why
 
@@ -37,15 +38,33 @@ Two rules keep the learning honest:
 
 Design decisions and their trade-offs are in [docs/design.md](docs/design.md).
 
+## Quickstart
+
+```bash
+pip install -e ".[ml,audio]"
+tasteq analyze ~/Music              # one-time analysis, cached in ~/.tasteq/tasteq.sqlite
+tasteq calibrate                    # ~10 diverse tracks x 4 A/B questions
+tasteq listen                       # whole tracks with your EQ; + / - while playing
+```
+
+No music handy? `tasteq demo-library ./demo-music` writes synthetic,
+copyright-free tracks to try it with. `tasteq show` prints the learned EQ per
+track, and `tasteq bench --config configs/main.yaml` reproduces the
+simulated-listener benchmark.
+
+Local playback uses PortAudio when installed and otherwise a system player
+(`pw-play`, `paplay`, `aplay` or `ffplay`).
+
 ## Roadmap
 
 Planned for this repository:
 
 - [x] Loudness-matched EQ rendering with property-based tests
-- [ ] Simulated listeners + preference models (random, preference GP, neural
+- [x] Simulated listeners + preference models (random, preference GP, neural
       Bradley–Terry ensemble) + reproducible benchmark
-- [ ] Track analysis and context features
-- [ ] Calibration and listen-and-learn CLI
+- [ ] Benchmark results and figures in this README
+- [x] Track analysis and context features
+- [x] Calibration and listen-and-learn CLI
 - [ ] Interactive Gradio demo with a live EQ curve and uncertainty band
 - [ ] Blind test, technical report
 
@@ -61,7 +80,7 @@ Longer term (not implemented here):
 
 ```bash
 python -m venv .venv && source .venv/bin/activate
-pip install -e ".[dev]"
+pip install -e ".[dev,ml,audio]"
 pytest
 ```
 
