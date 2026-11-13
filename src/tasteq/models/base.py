@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import zlib
 from abc import ABC, abstractmethod
 from collections.abc import Sequence
 
@@ -90,9 +91,15 @@ class PreferenceModel(ABC):
         # recommendation should never be an extrapolation into a region with
         # no data, nor sit next to something the listener rejected.
         anchors = np.vstack([self.space.flat, self._observed_winners()])
+        # A dedicated generator makes the recommendation a pure function of the
+        # history and context, so a model rebuilt from storage recommends the
+        # same EQ as the one that was trained interactively.
+        rng = np.random.default_rng(
+            [self.seed, len(self.comparisons), zlib.crc32(np.round(context, 9).tobytes())]
+        )
         candidates = candidate_points(
             self.dim,
-            self.rng,
+            rng,
             anchors=anchors,
             n_global=0,
             n_local_per_anchor=max(16, 2048 // len(anchors)),
@@ -101,7 +108,7 @@ class PreferenceModel(ABC):
         score = self._recommendation_score(candidates, context)
         # Second pass: refine around the most promising candidates.
         top = candidates[np.argsort(score)[-8:]]
-        refined = candidate_points(self.dim, self.rng, anchors=top, n_global=0, local_scale=0.03)
+        refined = candidate_points(self.dim, rng, anchors=top, n_global=0, local_scale=0.03)
         refined_score = self._recommendation_score(refined, context)
         if np.max(refined_score) > np.max(score):
             return np.asarray(refined[int(np.argmax(refined_score))], dtype=np.float64)
