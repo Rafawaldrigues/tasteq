@@ -10,8 +10,8 @@ playing.
 ![Python](https://img.shields.io/badge/python-3.11%20%7C%203.12-blue)
 
 > **Status:** active development. The DSP core, three preference models, the
-> simulated-listener benchmark and the calibrate/listen CLI work; benchmark
-> figures and the interactive demo are next. See the [roadmap](#roadmap).
+> simulated-listener benchmark and the calibrate/listen CLI work; the
+> interactive demo and a human blind test are next. See the [roadmap](#roadmap).
 
 ## Why
 
@@ -38,6 +38,64 @@ Two rules keep the learning honest:
 
 Design decisions and their trade-offs are in [docs/design.md](docs/design.md).
 
+## Results
+
+Before asking real people, every model is tested against nine simulated
+listeners ("personas") with a hidden taste and a noisy way of answering A/B
+questions. Some tastes are smooth and easy to model (bass lover, smile curve);
+others are deliberately hard: asymmetric, bimodal, a ridge of equally good
+curves, a cliff where any presence boost above +3 dB is rejected, or a listener
+who answers at random a quarter of the time. Each model gets 100 comparisons,
+10 seeds per persona, with common random numbers across models.
+
+The metric is **normalized regret** of the recommended EQ: 0 is the listener's
+true optimum, 1 is no better than leaving the EQ flat.
+
+![Regret vs. comparisons by persona group](docs/figures/overview.png)
+
+| after 100 comparisons | preference GP | neural ensemble | random search |
+|---|---|---|---|
+| smooth taste (3 personas) | **0.65** ± 0.09 | 3.47 ± 0.72 | 1.73 ± 0.49 |
+| irregular taste (4) | **0.35** ± 0.04 | 2.41 ± 0.27 | 0.83 ± 0.12 |
+| noisy answers (2) | **1.10** ± 0.24 | 2.94 ± 0.54 | 1.72 ± 0.39 |
+| runs better than flat | **75 / 90** | 9 / 90 | 41 / 90 |
+
+Mean ± 95% CI over seeds. Per-persona curves:
+[regret](docs/figures/regret_per_persona.png),
+[held-out accuracy](docs/figures/accuracy_per_persona.png); full table with
+"comparisons to reach 50% / 80% of the possible gain" in
+[docs/benchmark.md](docs/benchmark.md).
+
+What the numbers say:
+
+- **The preference GP is the only model that reliably improves on flat.** On
+  sibilance and tonal-balance tastes it captures 50% of the possible gain in
+  20–25 comparisons, which fits inside one calibration session.
+- **Early recommendations are worse than flat** for every model that explores
+  (regret above 1 at 10 comparisons). The GP crosses below flat after 20–40
+  comparisons on smooth and irregular tastes; until then, playing the flat EQ
+  would be the safer default.
+- **Noise is the hard part, not taste shape.** The noisy listener and the
+  context-dependent persona (whose taste flips between kinds of track) stay
+  near or above flat after 100 comparisons.
+
+### Why a GP and not just a neural network
+
+The neural Bradley–Terry ensemble *does* learn: it ranks held-out pairs with
+0.61 accuracy against the GP's 0.66. But its recommendations end up clearly
+**worse than flat** (regret 2.4–3.5). Our reading: with a few dozen noisy
+answers an MLP extrapolates confidently, and five bootstrap members agree with
+each other far more than the data justifies, so the uncertainty that should
+keep it near what the listener has heard collapses. The GP's posterior variance grows away from the
+data by construction, and that is exactly what a recommender working from tens
+of labels needs. A neural model becomes interesting with a prior pooled
+across many users (see the roadmap), not for one person's cold start.
+
+Reproduce with `tasteq bench --config configs/main.yaml` (about 3–4 h on 16
+CPU threads; resumable). These figures come from a run that straddled two
+commits differing only in how the recommendation search is seeded. A
+single-commit rerun is planned before the technical report.
+
 ## Quickstart
 
 ```bash
@@ -62,7 +120,7 @@ Planned for this repository:
 - [x] Loudness-matched EQ rendering with property-based tests
 - [x] Simulated listeners + preference models (random, preference GP, neural
       Bradley–Terry ensemble) + reproducible benchmark
-- [ ] Benchmark results and figures in this README
+- [x] Benchmark results and figures in this README
 - [x] Track analysis and context features
 - [x] Calibration and listen-and-learn CLI
 - [ ] Interactive Gradio demo with a live EQ curve and uncertainty band
