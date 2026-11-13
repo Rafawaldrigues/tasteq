@@ -7,6 +7,8 @@ tones (low crest factor) and percussive material (high crest factor).
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import numpy as np
 
 from tasteq.dsp import FloatArray
@@ -80,3 +82,36 @@ def _mix_in(out: FloatArray, sound: FloatArray, start: int) -> None:
 
 def _peak_normalize(x: FloatArray, peak: float = 0.5) -> FloatArray:
     return np.asarray(x * (peak / np.max(np.abs(x))), dtype=np.float64)
+
+
+def write_demo_library(
+    folder: Path, n_tracks: int = 8, duration_s: float = 30.0, seed: int = 0
+) -> list[Path]:
+    """Write a small library of synthetic "tracks" with different tonal balances.
+
+    Lets anyone try calibration and the demo without copyrighted music. The
+    tracks mix the generators above with different tilts so the analysis
+    finds genuinely different contexts.
+    """
+    import soundfile as sf
+
+    from tasteq.dsp import apply_eq
+
+    rng = np.random.default_rng(seed)
+    sample_rate = 44_100
+    folder.mkdir(parents=True, exist_ok=True)
+    paths = []
+    for i in range(n_tracks):
+        bpm = float(rng.uniform(80, 150))
+        mix = (
+            rng.uniform(0.3, 1.0) * drum_loop(duration_s, sample_rate, rng, bpm=bpm)
+            + rng.uniform(0.0, 0.6) * tone_mix(duration_s, sample_rate, rng, n_tones=6)
+            + rng.uniform(0.0, 0.3) * pink_noise(duration_s, sample_rate, rng)
+        )
+        tilt = np.linspace(-1.0, 1.0, 10) * rng.uniform(-6.0, 6.0)
+        mix = apply_eq(_peak_normalize(mix), sample_rate, tilt)
+        audio = stereo(_peak_normalize(mix, 0.7), rng, width=0.2)
+        path = folder / f"synthetic_{i:02d}_{int(bpm)}bpm.wav"
+        sf.write(path, _peak_normalize(audio, 0.9), sample_rate)
+        paths.append(path)
+    return paths
