@@ -10,8 +10,8 @@ playing.
 ![Python](https://img.shields.io/badge/python-3.11%20%7C%203.12-blue)
 
 > **Status:** active development. The DSP core, three preference models, the
-> simulated-listener benchmark and the calibrate/listen CLI work; the
-> interactive demo and a human blind test are next. See the [roadmap](#roadmap).
+> simulated-listener benchmark, the calibrate/listen CLI and the browser demo
+> work; a human blind test is next. See the [roadmap](#roadmap).
 
 ## Why
 
@@ -105,6 +105,20 @@ tasteq calibrate                    # ~10 diverse tracks x 4 A/B questions
 tasteq listen                       # whole tracks with your EQ; + / - while playing
 ```
 
+### Try it in the browser
+
+```bash
+pip install -e ".[ml,audio,demo]"
+tasteq demo --synthetic             # generated tracks, no music needed
+tasteq demo                         # your analyzed library
+```
+
+The demo plays two loudness-matched versions of an excerpt in random order and
+asks which one you prefer. Next to them, the EQ the model would play for that
+track updates after every answer, with a shaded band for how unsure it still
+is. Answers go to the same database as the CLI, so calibrating in the browser
+and listening in the terminal share one model.
+
 No music handy? `tasteq demo-library ./demo-music` writes synthetic,
 copyright-free tracks to try it with. `tasteq show` prints the learned EQ per
 track, and `tasteq bench --config configs/main.yaml` reproduces the
@@ -123,7 +137,7 @@ Planned for this repository:
 - [x] Benchmark results and figures in this README
 - [x] Track analysis and context features
 - [x] Calibration and listen-and-learn CLI
-- [ ] Interactive Gradio demo with a live EQ curve and uncertainty band
+- [x] Interactive Gradio demo with a live EQ curve and uncertainty band
 - [ ] Blind test, technical report
 
 Longer term (not implemented here):
