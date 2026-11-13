@@ -114,6 +114,29 @@ class PreferenceModel(ABC):
             return np.asarray(refined[int(np.argmax(refined_score))], dtype=np.float64)
         return np.asarray(candidates[int(np.argmax(score))], dtype=np.float64)
 
+    def plausible_best(self, context: FloatArray | None = None, n_samples: int = 64) -> FloatArray:
+        """Points that could be the best one, given the model's uncertainty.
+
+        Each sample draws a utility for every candidate near the heard
+        winners from its marginal posterior and keeps the argmax. Marginal
+        draws ignore correlations between candidates, so the spread is a
+        rough (somewhat wide) picture of uncertainty about the optimum, meant
+        for display, not for decisions. Shape ``(n_samples, dim)``.
+        """
+        c = as_context(context, self.context_dim)
+        if not self.comparisons:
+            return np.repeat(self.space.flat[None, :], n_samples, axis=0)
+        rng = np.random.default_rng(
+            [self.seed, len(self.comparisons), zlib.crc32(np.round(c, 9).tobytes()), 1]
+        )
+        anchors = np.vstack([self.space.flat, self._observed_winners()])
+        candidates = candidate_points(
+            self.dim, rng, anchors=anchors, n_global=0, n_local_per_anchor=32
+        )
+        mean, std = self.predict(candidates, c)
+        draws = mean + std * rng.standard_normal((n_samples, len(candidates)))
+        return np.asarray(candidates[np.argmax(draws, axis=1)], dtype=np.float64)
+
     def _recommendation_score(self, x: FloatArray, context: FloatArray) -> FloatArray:
         """Lower confidence bound: what we recommend should be good *and* known.
 

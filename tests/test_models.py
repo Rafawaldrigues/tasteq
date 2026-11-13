@@ -63,6 +63,17 @@ def test_interface_contract_after_updates(kind: str) -> None:
 
 
 @pytest.mark.parametrize("kind", MODEL_KINDS)
+def test_plausible_best_is_flat_cold_and_spread_after_data(kind: str) -> None:
+    model = build(kind)
+    np.testing.assert_array_equal(model.plausible_best(CONTEXT, 8), np.tile(SPACE.flat, (8, 1)))
+    play(model, 6)
+    samples = model.plausible_best(CONTEXT, 16)
+    assert samples.shape == (16, SPACE.dim)
+    assert np.all((samples >= 0) & (samples <= 1))
+    np.testing.assert_array_equal(samples, model.plausible_best(CONTEXT, 16))
+
+
+@pytest.mark.parametrize("kind", MODEL_KINDS)
 def test_rebuilding_from_history_is_deterministic(kind: str) -> None:
     original = build(kind, seed=5)
     play(original, 5)

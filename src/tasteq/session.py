@@ -145,6 +145,11 @@ class Tuner:
         """Predicted best EQ gains for a track."""
         return self.space.to_gains(self.best_point(track))
 
+    def plausible_gains(self, track: StoredTrack, n_samples: int = 64) -> FloatArray:
+        """EQ gains that could be the best for a track, shape ``(n_samples, bands)``."""
+        points = self.model.plausible_best(self.library.context(track), n_samples)
+        return np.stack([self.space.to_gains(p) for p in points])
+
     def close(self) -> None:
         """End the session in the log."""
         self.storage.end_session(self.session_id)
