@@ -139,6 +139,47 @@ def show(db: DbOption = DEFAULT_DB, model: ModelOption = "gp") -> None:
         tuner.close()
 
 
+@app.command()
+def demo(
+    db: Annotated[
+        Path | None, typer.Option(help="SQLite database (default: TASTEQ_DB, or a demo one).")
+    ] = None,
+    model: ModelOption = "gp",
+    synthetic: Annotated[
+        bool, typer.Option(help="Use generated, copyright-free tracks in a separate database.")
+    ] = False,
+    port: Annotated[int, typer.Option(help="Local port.")] = 7860,
+) -> None:
+    """Open the browser demo: blind A/B questions and a live EQ curve."""
+    from tasteq.demo import DemoSession, build_app
+    from tasteq.library import analyze_folder
+    from tasteq.session import Tuner
+    from tasteq.storage import Storage
+    from tasteq.synth import write_demo_library
+
+    if synthetic:
+        home = DEFAULT_DB.parent
+        db = db or home / "demo.sqlite"
+        folder = home / "demo-music"
+        if not folder.exists():
+            typer.echo(f"writing synthetic tracks to {folder}")
+            write_demo_library(folder)
+    db = db or DEFAULT_DB
+    with Storage(db) as storage:
+        if synthetic:
+            analyze_folder(folder, storage)
+        try:
+            tuner = Tuner(storage, model, session_kind="demo")
+        except LookupError:
+            raise typer.BadParameter(
+                "no analyzed tracks: run `tasteq analyze <folder>` first, or use --synthetic"
+            ) from None
+        try:
+            build_app(DemoSession(tuner)).launch(server_port=port)
+        finally:
+            tuner.close()
+
+
 @app.command("demo-library")
 def demo_library(
     folder: Annotated[Path, typer.Argument(help="Where to write the synthetic tracks.")],
