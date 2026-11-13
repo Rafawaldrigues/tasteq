@@ -73,17 +73,14 @@ def _curve(rows: Rows, metric: str) -> tuple[np.ndarray, np.ndarray, np.ndarray]
 
 
 def plot_overview(rows: Rows, path: Path) -> None:
-    """Regret vs. comparisons, averaged over personas, split by well/misspecified."""
+    """Regret vs. comparisons, averaged over personas, one panel per persona group."""
     import matplotlib.pyplot as plt
 
     models = _models(rows)
-    fig, axes = plt.subplots(1, 2, figsize=(10, 3.8), sharey=True)
-    groups = [
-        ("Well-specified personas", True),
-        ("Misspecified personas", False),
-    ]
-    for ax, (title, well) in zip(axes, groups, strict=True):
-        subset = [r for r in rows if PERSONAS[r["persona"]].well_specified == well]
+    groups = ["smooth taste", "irregular taste", "noisy answers"]
+    fig, axes = plt.subplots(1, len(groups), figsize=(12, 3.8), sharey=True)
+    for ax, group_name in zip(axes, groups, strict=True):
+        subset = [r for r in rows if PERSONAS[r["persona"]].group == group_name]
         if not subset:
             ax.set_visible(False)
             continue
@@ -113,19 +110,12 @@ def plot_overview(rows: Rows, path: Path) -> None:
                 va="center",
             )
         ax.axhline(1.0, color=MUTED, linewidth=1, linestyle=(0, (4, 3)))
-        ax.text(
-            0.02,
-            1.0,
-            "flat EQ",
-            color=MUTED,
-            fontsize=8,
-            va="bottom",
-            transform=ax.get_yaxis_transform(),
-        )
-        ax.set_title(title, color=TEXT, fontsize=10, loc="left")
+        names = ", ".join(sorted({r["persona"] for r in subset}))
+        ax.set_title(f"{group_name.capitalize()}\n", color=TEXT, fontsize=10, loc="left")
+        ax.set_title(names, color=MUTED, fontsize=7, loc="right")
         ax.set_xlabel("pairwise comparisons", color=MUTED, fontsize=9)
         _style_axis(ax)
-    axes[0].set_ylabel("normalized regret (lower is better)", color=MUTED, fontsize=9)
+    axes[0].set_ylabel("normalized regret (1 = flat EQ, lower is better)", color=MUTED, fontsize=9)
     axes[0].set_ylim(bottom=0)
     [ax for ax in axes if ax.get_visible()][-1].legend(frameon=False, fontsize=8, loc="upper right")
     fig.tight_layout()
@@ -153,8 +143,7 @@ def plot_per_persona(rows: Rows, path: Path, metric: str = "regret") -> None:
             ax.plot(ns, mean, color=color, linewidth=2, label=model)
         if metric == "regret":
             ax.axhline(1.0, color=MUTED, linewidth=1, linestyle=(0, (4, 3)))
-        tag = "" if PERSONAS[persona].well_specified else " (misspecified)"
-        ax.set_title(persona + tag, color=TEXT, fontsize=9, loc="left")
+        ax.set_title(f"{persona} ({PERSONAS[persona].group})", color=TEXT, fontsize=9, loc="left")
         _style_axis(ax)
     for ax in axes.flat[len(personas) :]:
         ax.set_visible(False)

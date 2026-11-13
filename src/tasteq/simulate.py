@@ -100,6 +100,13 @@ class Persona:
     lapse: float = 0.0
     tie_margin: float = 0.15
 
+    @property
+    def group(self) -> str:
+        """Which difficulty the persona tests: answer noise, taste shape, or neither."""
+        if self.temperature > 1.0 or self.lapse > 0.0:
+            return "noisy answers"
+        return "smooth taste" if self.well_specified else "irregular taste"
+
     def utility_of(self, gains: FloatArray, context: FloatArray) -> FloatArray:
         """Hidden utility of one or many gain vectors."""
         return np.asarray(self.utility(np.atleast_2d(gains), context), dtype=np.float64)
