@@ -39,6 +39,7 @@ class Question:
     a: FloatArray
     b: FloatArray
     a_first: bool
+    excerpt_start_s: float | None = None  # None: the track's representative excerpt
 
     @property
     def presented(self) -> tuple[FloatArray, FloatArray]:
@@ -98,12 +99,30 @@ class Tuner:
         a, b = self.model.suggest_pair(context)
         return Question(track, context, a, b, a_first=bool(self.rng.random() < 0.5))
 
+    def ask_between(
+        self,
+        track: StoredTrack,
+        a: FloatArray,
+        b: FloatArray,
+        excerpt_start_s: float | None = None,
+    ) -> Question:
+        """A/B question on chosen points (and moment) instead of the model's own pair."""
+        return Question(
+            track,
+            self.library.context(track),
+            np.asarray(a, dtype=np.float64),
+            np.asarray(b, dtype=np.float64),
+            a_first=bool(self.rng.random() < 0.5),
+            excerpt_start_s=excerpt_start_s,
+        )
+
     def render_question(self, question: Question) -> tuple[FloatArray, FloatArray]:
         """Loudness-matched excerpts in listening order."""
         first, second = question.presented
+        start = question.excerpt_start_s
         return (
-            self.renderer.excerpt(question.track, self.space.to_gains(first)),
-            self.renderer.excerpt(question.track, self.space.to_gains(second)),
+            self.renderer.excerpt(question.track, self.space.to_gains(first), start),
+            self.renderer.excerpt(question.track, self.space.to_gains(second), start),
         )
 
     def answer(self, question: Question, answer: Answer) -> Comparison:
@@ -115,6 +134,7 @@ class Tuner:
             presented_first="a" if question.a_first else "b",
             source="ab",
             excerpt=True,
+            excerpt_start_s=question.excerpt_start_s,
         )
         self.model.update([comparison])
         return comparison
@@ -162,6 +182,7 @@ class Tuner:
         presented_first: str,
         source: str,
         excerpt: bool,
+        excerpt_start_s: float | None = None,
     ) -> None:
         self.storage.add_comparison(
             self.session_id,
@@ -172,7 +193,11 @@ class Tuner:
                 track_id=track.id,
                 presented_first=presented_first,
                 source=source,
-                excerpt_start_s=track.analysis.excerpt_start_s if excerpt else None,
+                excerpt_start_s=(
+                    track.analysis.excerpt_start_s if excerpt_start_s is None else excerpt_start_s
+                )
+                if excerpt
+                else None,
                 excerpt_duration_s=track.analysis.excerpt_duration_s if excerpt else None,
             ),
         )

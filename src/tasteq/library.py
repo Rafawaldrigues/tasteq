@@ -12,6 +12,7 @@ import numpy as np
 from tasteq.analysis import (
     ANALYSIS_SAMPLE_RATE,
     ContextProjector,
+    activity_moments,
     analyze_track,
     find_audio_files,
     fingerprint,
@@ -120,9 +121,22 @@ class Renderer:
         self._audio.move_to_end(path)
         return self._audio[path]
 
-    def excerpt(self, track: StoredTrack, gains_db: FloatArray) -> FloatArray:
-        """Render the representative excerpt with ``gains_db``, loudness-matched."""
-        start = int(track.analysis.excerpt_start_s * self.sample_rate)
+    def moments(self, track: StoredTrack, n_moments: int = 3) -> list[float]:
+        """Start times of busy, mutually different excerpts (see ``activity_moments``)."""
+        return activity_moments(
+            self.audio(track), self.sample_rate, n_moments, track.analysis.excerpt_duration_s
+        )
+
+    def excerpt(
+        self, track: StoredTrack, gains_db: FloatArray, start_s: float | None = None
+    ) -> FloatArray:
+        """Render an excerpt with ``gains_db``, loudness-matched.
+
+        ``start_s`` picks the moment; by default the track's representative excerpt.
+        """
+        if start_s is None:
+            start_s = track.analysis.excerpt_start_s
+        start = int(start_s * self.sample_rate)
         length = int(track.analysis.excerpt_duration_s * self.sample_rate)
         clip = self.audio(track)[start : start + length]
         return render(clip, self.sample_rate, gains_db, target=self.target).audio

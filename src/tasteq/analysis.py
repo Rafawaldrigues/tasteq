@@ -167,6 +167,87 @@ def representative_excerpt(
     return float(np.argmin(distances) * hop_s)
 
 
+# Band-level distance (L2 over bands, dB) that counts as a clearly different sound.
+SHAPE_GAP_DB = 20.0
+
+
+def _frame_activity(mono: FloatArray, sample_rate: int, hop_s: float) -> FloatArray:
+    """Spectral flux (how much the spectrum changes, i.e. musical activity) per ``hop_s`` frame."""
+    _, _, spectrum = signal.stft(mono, fs=sample_rate, nperseg=2048, noverlap=1536)
+    magnitude = np.log1p(np.abs(spectrum) * 100.0)
+    flux = np.maximum(np.diff(magnitude, axis=1), 0.0).sum(axis=0)
+    per_frame = max(1, round(hop_s * sample_rate / 512))
+    n_frames = flux.shape[0] // per_frame
+    if n_frames == 0:
+        return np.zeros(1)
+    return np.asarray(flux[: n_frames * per_frame].reshape(n_frames, per_frame).mean(axis=1))
+
+
+def activity_moments(
+    audio: FloatArray,
+    sample_rate: int,
+    n_moments: int = 3,
+    duration_s: float = 12.0,
+    hop_s: float = 1.0,
+) -> list[float]:
+    """Start times of up to ``n_moments`` busy, mutually different windows of a track.
+
+    Busy means high spectral flux (notes, drums and vocals changing), the
+    parts where an EQ difference is easiest to hear. Windows may not overlap
+    and, after the busiest one, each next pick trades activity against spectral
+    and temporal distance to those already chosen, so the moments cover
+    different sounds (say a bass-heavy drop and a vocal-led chorus) from
+    different parts of the song rather than the same loud section three times.
+    Windows much quieter than the track are skipped. Returned in track order.
+    """
+    if n_moments < 1:
+        return []
+    total = audio.shape[0] / sample_rate
+    if total <= duration_s or n_moments == 1:
+        return [representative_excerpt(audio, sample_rate, duration_s, hop_s)]
+    mono = audio.mean(axis=1) if audio.ndim == 2 else audio
+    frame = int(hop_s * sample_rate)
+    energies = _frame_band_energies(mono, sample_rate, frame, DEFAULT_CENTER_FREQS_HZ)
+    activity = _frame_activity(mono, sample_rate, hop_s)
+    n_frames = min(energies.shape[0], activity.shape[0])
+    energies, activity = energies[:n_frames], activity[:n_frames]
+    per_window = round(duration_s / hop_s)
+    if n_frames < per_window:
+        return [0.0]
+
+    def window_sum(values: FloatArray) -> FloatArray:
+        cumulative = np.concatenate([np.zeros((1, *values.shape[1:])), np.cumsum(values, axis=0)])
+        return np.asarray(cumulative[per_window:] - cumulative[:-per_window])
+
+    windows = window_sum(energies)
+    levels = 10.0 * np.log10(windows)
+    shapes = levels - levels.mean(axis=1, keepdims=True)
+    busy = window_sum(activity[:, None])[:, 0] / per_window
+    busy = busy / max(float(np.max(busy)), 1e-12)
+    window_level_db = 10.0 * np.log10(windows.sum(axis=1))
+    loud_enough = window_level_db >= np.max(window_level_db) - 6.0
+    busy = np.where(loud_enough, busy, -np.inf)
+
+    chosen: list[int] = []
+    while len(chosen) < n_moments:
+        score = busy.copy()
+        for i in chosen:  # no overlap with earlier picks
+            score[max(0, i - per_window + 1) : i + per_window] = -np.inf
+        if chosen:
+            shape_gap = np.min([np.linalg.norm(shapes - shapes[i], axis=1) for i in chosen], axis=0)
+            time_gap = np.min([np.abs(np.arange(shapes.shape[0]) - i) for i in chosen], axis=0)
+            score = (
+                score
+                + 0.5 * np.minimum(shape_gap / SHAPE_GAP_DB, 1.0)  # a different sound
+                + 0.5 * time_gap / max(shapes.shape[0] - 1, 1)  # from elsewhere in the song
+            )
+        best = int(np.argmax(score))
+        if not np.isfinite(score[best]):
+            break
+        chosen.append(best)
+    return sorted(float(i * hop_s) for i in chosen)
+
+
 def analyze_track(path: Path, excerpt_duration_s: float = 12.0) -> TrackAnalysis:
     """Full analysis of one audio file."""
     audio = load_audio(path)
