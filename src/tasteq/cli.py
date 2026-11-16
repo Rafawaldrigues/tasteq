@@ -118,6 +118,46 @@ def listen(
 
 
 @app.command()
+def refine(
+    db: DbOption = DEFAULT_DB,
+    model: ModelOption = "gp",
+    track: Annotated[
+        str | None, typer.Option(help="Only tracks whose path contains this text.")
+    ] = None,
+    versions: Annotated[int, typer.Option(help="EQ versions to compare per track.")] = 6,
+    moments: Annotated[int, typer.Option(help="Busy moments of the track to rotate through.")] = 3,
+    max_tracks: Annotated[int, typer.Option(help="Tracks to refine.")] = 5,
+) -> None:
+    """Refine favourite tracks: a blind tournament among several EQ versions of busy moments."""
+    from tasteq.playback import default_player
+    from tasteq.refine import run_refinement
+    from tasteq.session import Tuner
+    from tasteq.storage import Storage
+
+    player = default_player()
+    with Storage(db) as storage:
+        tuner = Tuner(storage, model, session_kind="refine")
+        tracks = [t for t in tuner.library.tracks if track is None or track in t.analysis.path]
+        if not tracks:
+            raise typer.BadParameter("no track matches")
+        results = list(
+            run_refinement(
+                tuner,
+                player,
+                typer.prompt,
+                tracks[:max_tracks],
+                versions,
+                moments,
+            )
+        )
+        tuner.close()
+    typer.echo(
+        f"{sum(r.answered for r in results)} answers on {len(results)} tracks "
+        f"({tuner.n_comparisons} comparisons in total)."
+    )
+
+
+@app.command()
 def show(db: DbOption = DEFAULT_DB, model: ModelOption = "gp") -> None:
     """Print the learned EQ for each track."""
     from tasteq.dsp import DEFAULT_CENTER_FREQS_HZ
@@ -137,6 +177,58 @@ def show(db: DbOption = DEFAULT_DB, model: ModelOption = "gp") -> None:
             name = Path(track.analysis.path).name[:30]
             typer.echo(f"{name:<32}" + "".join(f"{g:+6.1f}" for g in gains))
         tuner.close()
+
+
+@app.command()
+def blindtest(
+    db: DbOption = DEFAULT_DB,
+    model: ModelOption = "gp",
+    trials: Annotated[int, typer.Option(help="Number of trials.")] = 20,
+    seed: Annotated[int, typer.Option(help="Seed for trial order and random EQs.")] = 0,
+) -> None:
+    """Blind test: learned EQ vs. flat and vs. a random EQ of the same strength."""
+    from tasteq.blindtest import MIN_COMPARISONS, BlindTest, format_results
+    from tasteq.calibrate import ANSWER_KEYS
+    from tasteq.playback import default_player
+    from tasteq.session import Tuner
+    from tasteq.storage import Storage
+
+    player = default_player()
+    with Storage(db) as storage:
+        tuner = Tuner(storage, model, session_kind="blindtest-setup", seed=seed)
+        tuner.close()
+        if tuner.n_comparisons < MIN_COMPARISONS:
+            typer.echo(
+                f"only {tuner.n_comparisons} comparisons learned; results mean little "
+                f"below {MIN_COMPARISONS} (run `tasteq calibrate` first)"
+            )
+        test = BlindTest(tuner, trials, seed)
+        rate = tuner.renderer.sample_rate
+        while not test.done:
+            typer.echo(f"\ntrial {test.position + 1}/{trials}")
+            first, second = test.render()
+            reply = "r"
+            while reply == "r":
+                for label, audio in (("1", first), ("2", second)):
+                    typer.echo(f"  ▶ version {label}")
+                    player.start(audio, rate)
+                    player.wait()
+                reply = typer.prompt("Prefer [1], [2], no difference [=], replay [r]")
+            if reply in ANSWER_KEYS:
+                test.answer(ANSWER_KEYS[reply])
+        typer.echo("\n" + format_results(test.results()))
+
+
+@app.command("blindtest-report")
+def blindtest_report(db: DbOption = DEFAULT_DB) -> None:
+    """Results of every blind trial in the database."""
+    from tasteq.blindtest import analyze, format_results
+    from tasteq.storage import Storage
+
+    with Storage(db) as storage:
+        rows = storage.blind_trials()
+    typer.echo(f"{len(rows)} blind trials\n")
+    typer.echo(format_results(analyze(rows)))
 
 
 @app.command()

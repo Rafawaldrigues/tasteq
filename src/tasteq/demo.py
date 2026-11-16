@@ -8,12 +8,14 @@ it to Gradio components.
 
 from __future__ import annotations
 
+import secrets
 import threading
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
+from tasteq.blindtest import MIN_COMPARISONS, BlindTest, format_results
 from tasteq.calibrate import calibration_tracks
 from tasteq.dsp import DEFAULT_CENTER_FREQS_HZ, FloatArray, frequency_response_db
 from tasteq.report import GRID, MODEL_COLORS, MUTED, TEXT
@@ -35,6 +37,17 @@ excerpt with two different EQs, **matched in loudness**, in random order.
 After each answer the model updates and proposes a new pair. The curve on the
 right is the EQ it would play for this track right now; the shaded band shows
 how unsure it still is.
+"""
+
+BLIND_INTRO = """\
+# Blind test
+
+Does the learned EQ actually sound better to you? Each trial plays the same
+excerpt twice, loudness-matched and in random order. One version is the learned
+EQ; the other is either **no EQ** or a **random EQ of the same strength**. You
+are not told which. The EQs are frozen when the test starts and your answers
+here do not train the model. At the end you get a win rate with a 95%
+confidence interval and an exact binomial test.
 """
 
 
@@ -65,6 +78,7 @@ class DemoSession:
         self.track = self.order[0]
         self.asked_on_track = 0
         self.question: Question | None = None
+        self.blind: BlindTest | None = None
 
     @property
     def labels(self) -> list[str]:
@@ -155,6 +169,41 @@ class DemoSession:
         plt.close(fig)
         return fig
 
+    def start_blind_test(self, n_trials: int = 20) -> tuple[AudioOut, AudioOut]:
+        """Freeze the current model into a new blind test and open its first trial."""
+        with self.lock:
+            self.blind = BlindTest(self.tuner, n_trials, seed=secrets.randbelow(2**31))
+            return self._render_blind()
+
+    def answer_blind(self, answer: Answer) -> tuple[AudioOut, AudioOut] | None:
+        """Record a blind answer; returns the next trial, or ``None`` when finished."""
+        with self.lock:
+            if self.blind is None or self.blind.done:
+                raise RuntimeError("no blind test running")
+            self.blind.answer(answer)
+            return None if self.blind.done else self._render_blind()
+
+    def blind_status(self) -> str:
+        """Progress line, or the results table once the test is over."""
+        test = self.blind
+        if test is None:
+            n = self.tuner.n_comparisons
+            if n < MIN_COMPARISONS:
+                return (
+                    f"The model has learned from {n} comparisons. Below {MIN_COMPARISONS} "
+                    "the test says little; answer more questions in the Tune tab first."
+                )
+            return f"Ready: the model has learned from {n} comparisons."
+        if test.done:
+            return format_results(test.results())
+        return f"Trial **{test.position + 1}** of {len(test.trials)}"
+
+    def _render_blind(self) -> tuple[AudioOut, AudioOut]:
+        assert self.blind is not None
+        first, second = self.blind.render()
+        rate = self.tuner.renderer.sample_rate
+        return (rate, to_int16(first)), (rate, to_int16(second))
+
     def _open_question(self) -> tuple[AudioOut, AudioOut]:
         self.question = self.tuner.ask(self.track)
         return self._render(self.question)
@@ -179,27 +228,63 @@ def build_app(session: DemoSession) -> Any:
             gr.update(value=track_label(session.track)),
         )
 
+    def blind_refresh(audio: tuple[AudioOut, AudioOut] | None) -> tuple[Any, ...]:
+        running = audio is not None
+        first, second = audio if audio is not None else (None, None)
+        return (
+            first,
+            second,
+            session.blind_status(),
+            gr.update(visible=running),
+            gr.update(visible=not running),
+        )
+
     with gr.Blocks(title="tasteq") as app:
-        gr.Markdown(INTRO)
-        with gr.Row():
-            with gr.Column(scale=1):
-                track = gr.Dropdown(session.labels, value=session.labels[0], label="Track")
-                first = gr.Audio(label="Version 1", type="numpy", format="wav", interactive=False)
-                second = gr.Audio(label="Version 2", type="numpy", format="wav", interactive=False)
+        with gr.Tab("Tune"):
+            gr.Markdown(INTRO)
+            with gr.Row():
+                with gr.Column(scale=1):
+                    track = gr.Dropdown(session.labels, value=session.labels[0], label="Track")
+                    first = gr.Audio(
+                        label="Version 1", type="numpy", format="wav", interactive=False
+                    )
+                    second = gr.Audio(
+                        label="Version 2", type="numpy", format="wav", interactive=False
+                    )
+                    with gr.Row():
+                        prefer_first = gr.Button("Prefer 1", variant="primary", min_width=0)
+                        no_difference = gr.Button("Same", min_width=0)
+                        prefer_second = gr.Button("Prefer 2", variant="primary", min_width=0)
+                with gr.Column(scale=1):
+                    curve = gr.Plot(label="Learned EQ", show_label=False)
+                    status = gr.Markdown()
+                    with gr.Accordion("Hear the learned EQ against flat", open=False):
+                        play = gr.Button("Render this track")
+                        learned = gr.Audio(label="Learned EQ", format="wav", interactive=False)
+                        flat = gr.Audio(label="Flat (no EQ)", format="wav", interactive=False)
+
+        with gr.Tab("Blind test") as blind_tab:
+            gr.Markdown(BLIND_INTRO)
+            blind_status = gr.Markdown()
+            start = gr.Button("Start a 20-trial blind test", variant="primary")
+            with gr.Column(visible=False) as blind_trial:
+                blind_first = gr.Audio(
+                    label="Version 1", type="numpy", format="wav", interactive=False
+                )
+                blind_second = gr.Audio(
+                    label="Version 2", type="numpy", format="wav", interactive=False
+                )
                 with gr.Row():
-                    prefer_first = gr.Button("Prefer 1", variant="primary", min_width=0)
-                    no_difference = gr.Button("Same", min_width=0)
-                    prefer_second = gr.Button("Prefer 2", variant="primary", min_width=0)
-            with gr.Column(scale=1):
-                curve = gr.Plot(label="Learned EQ", show_label=False)
-                status = gr.Markdown()
-                with gr.Accordion("Hear the learned EQ against flat", open=False):
-                    play = gr.Button("Render this track")
-                    learned = gr.Audio(label="Learned EQ", format="wav", interactive=False)
-                    flat = gr.Audio(label="Flat (no EQ)", format="wav", interactive=False)
+                    blind_buttons = [
+                        (gr.Button("Prefer 1", variant="primary", min_width=0), "first"),
+                        (gr.Button("Same", min_width=0), "tie"),
+                        (gr.Button("Prefer 2", variant="primary", min_width=0), "second"),
+                    ]
 
         outputs = [first, second, curve, status, track]
         app.load(lambda: refresh(session.current()), outputs=outputs)
+        app.load(session.blind_status, outputs=blind_status)
+        blind_tab.select(session.blind_status, outputs=blind_status)
         track.input(lambda label: refresh(session.select(label)), inputs=track, outputs=outputs)
         for button, answer in (
             (prefer_first, "first"),
@@ -208,4 +293,11 @@ def build_app(session: DemoSession) -> Any:
         ):
             button.click(lambda a=answer: refresh(session.answer(a)), outputs=outputs)
         play.click(session.learned_vs_flat, outputs=[learned, flat])
+
+        blind_outputs = [blind_first, blind_second, blind_status, blind_trial, start]
+        start.click(lambda: blind_refresh(session.start_blind_test()), outputs=blind_outputs)
+        for button, answer in blind_buttons:
+            button.click(
+                lambda a=answer: blind_refresh(session.answer_blind(a)), outputs=blind_outputs
+            )
     return app
