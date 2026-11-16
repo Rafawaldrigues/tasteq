@@ -10,8 +10,9 @@ playing.
 ![Python](https://img.shields.io/badge/python-3.11%20%7C%203.12-blue)
 
 > **Status:** active development. The DSP core, three preference models, the
-> simulated-listener benchmark, the calibrate/listen CLI and the browser demo
-> work; a human blind test is next. See the [roadmap](#roadmap).
+> simulated-listener benchmark, the calibrate/listen CLI, the browser demo and
+> the blind test work; human blind-test results and a technical report are
+> next. See the [roadmap](#roadmap).
 
 ## Why
 
@@ -119,6 +120,23 @@ track updates after every answer, with a shaded band for how unsure it still
 is. Answers go to the same database as the CLI, so calibrating in the browser
 and listening in the terminal share one model.
 
+### Blind test
+
+Once the model has learned from at least ~20 comparisons, check whether it
+actually helps:
+
+```bash
+tasteq blindtest                    # 20 trials in the terminal (or the demo's Blind test tab)
+tasteq blindtest-report             # every trial so far, with the statistics
+```
+
+Each trial plays the learned EQ against either no EQ or a **random EQ of the
+same strength**, loudness-matched, in random order and unlabeled. The second
+comparison controls for "any change sounds better". The EQs are frozen when
+the test starts and blind answers never train the model. The primary
+hypothesis (learned beats flat) is tested with a one-sided exact binomial test
+on the decisive trials; "no difference" answers are reported, not counted.
+
 No music handy? `tasteq demo-library ./demo-music` writes synthetic,
 copyright-free tracks to try it with. `tasteq show` prints the learned EQ per
 track, and `tasteq bench --config configs/main.yaml` reproduces the
@@ -138,7 +156,8 @@ Planned for this repository:
 - [x] Track analysis and context features
 - [x] Calibration and listen-and-learn CLI
 - [x] Interactive Gradio demo with a live EQ curve and uncertainty band
-- [ ] Blind test, technical report
+- [x] Blind test (learned vs. flat vs. random EQ, exact binomial test)
+- [ ] Human blind-test results, technical report
 
 Longer term (not implemented here):
 
