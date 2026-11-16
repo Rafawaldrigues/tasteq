@@ -2,7 +2,8 @@
 
 The comparison log is the source of truth. Models are never pickled; they are
 rebuilt by replaying comparisons, which keeps the database readable, portable
-across code versions and auditable.
+across code versions and auditable. Blind-test trials live in their own table:
+they evaluate the model and must never be replayed into it.
 
 Each comparison stores both the unit-cube points the model saw and the gains
 that were actually played, the context used at the time, which version was
@@ -64,6 +65,20 @@ CREATE TABLE IF NOT EXISTS comparisons (
     excerpt_start_s REAL,
     excerpt_duration_s REAL,
     weight REAL NOT NULL
+);
+CREATE TABLE IF NOT EXISTS blind_trials (
+    id INTEGER PRIMARY KEY,
+    session_id INTEGER NOT NULL REFERENCES sessions(id),
+    track_id INTEGER REFERENCES tracks(id),
+    created_at TEXT NOT NULL,
+    subject TEXT NOT NULL,
+    condition_a TEXT NOT NULL,
+    condition_b TEXT NOT NULL,
+    gains_a TEXT NOT NULL,
+    gains_b TEXT NOT NULL,
+    presented_first TEXT NOT NULL,
+    outcome TEXT NOT NULL,
+    n_comparisons INTEGER NOT NULL
 );
 CREATE TABLE IF NOT EXISTS meta (
     key TEXT PRIMARY KEY,
@@ -260,6 +275,50 @@ class Storage:
     def comparison_rows(self) -> list[dict[str, Any]]:
         """Raw comparison rows, for analysis and export."""
         return [dict(r) for r in self.conn.execute("SELECT * FROM comparisons ORDER BY id")]
+
+    # --- blind test ---
+
+    def add_blind_trial(
+        self,
+        session_id: int,
+        track_id: int,
+        conditions: tuple[str, str],
+        gains: tuple[FloatArray, FloatArray],
+        presented_first: str,
+        outcome: Outcome,
+        n_comparisons: int,
+        subject: str = "human",
+    ) -> int:
+        """Log one blind-test answer (``outcome`` refers to ``conditions``)."""
+        with self._tx() as c:
+            cursor = c.execute(
+                """
+                INSERT INTO blind_trials (session_id, track_id, created_at, subject,
+                    condition_a, condition_b, gains_a, gains_b, presented_first, outcome,
+                    n_comparisons)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    session_id,
+                    track_id,
+                    _now(),
+                    subject,
+                    *conditions,
+                    _dump(gains[0]),
+                    _dump(gains[1]),
+                    presented_first,
+                    outcome.value,
+                    n_comparisons,
+                ),
+            )
+        return int(cursor.lastrowid or 0)
+
+    def blind_trials(self, subject: str = "human") -> list[dict[str, Any]]:
+        """Raw blind-test rows for one subject, oldest first."""
+        rows = self.conn.execute(
+            "SELECT * FROM blind_trials WHERE subject = ? ORDER BY id", (subject,)
+        )
+        return [dict(r) for r in rows]
 
     # --- meta ---
 
