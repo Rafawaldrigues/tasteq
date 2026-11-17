@@ -37,7 +37,9 @@ Two rules keep the learning honest:
 - **Louder never wins.** Every version is normalized to −23 LUFS (±0.5 LU) with
   true peak ≤ −1 dBTP, verified by property-based tests for any EQ in range.
 
-Design decisions and their trade-offs are in [docs/design.md](docs/design.md).
+Design decisions and their trade-offs are in [docs/design.md](docs/design.md);
+the [technical report](docs/report.md) covers the method, the evaluation and
+its limits.
 
 ## Results
 
@@ -76,6 +78,10 @@ What the numbers say:
   (regret above 1 at 10 comparisons). The GP crosses below flat after 20–40
   comparisons on smooth and irregular tastes; until then, playing the flat EQ
   would be the safer default.
+- **A smooth EQ basis helps once there is data.** Searching 5 DCT components
+  instead of 10 independent bands lowers regret at 60 comparisons (0.60 vs.
+  0.77, paired p = 0.0002) but is worse in the first 20
+  ([ablation](docs/report.md#45-ablation-raw-bands-vs-smooth-basis)).
 - **Noise is the hard part, not taste shape.** The noisy listener and the
   context-dependent persona (whose taste flips between kinds of track) stay
   near or above flat after 100 comparisons.
@@ -157,7 +163,8 @@ Planned for this repository:
 - [x] Calibration and listen-and-learn CLI
 - [x] Interactive Gradio demo with a live EQ curve and uncertainty band
 - [x] Blind test (learned vs. flat vs. random EQ, exact binomial test)
-- [ ] Human blind-test results, technical report
+- [x] Technical report ([docs/report.md](docs/report.md))
+- [ ] Human blind-test results
 
 Longer term (not implemented here):
 
