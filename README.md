@@ -151,6 +151,15 @@ simulated-listener benchmark.
 Local playback uses PortAudio when installed and otherwise a system player
 (`pw-play`, `paplay`, `aplay` or `ffplay`).
 
+### Web study
+
+[`web/`](web/README.md) turns the same loop into a public listening study:
+general taste on synthetic sounds first, then songs from styles each person
+picks (28 Creative Commons tracks from the Free Music Archive), then a blind
+test that includes learned-per-song vs one global curve. Every participant gets
+an anonymous code and their own database; `python -m web.export` collects
+everything for analysis.
+
 ## Roadmap
 
 Planned for this repository:

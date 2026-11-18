@@ -1,0 +1,16 @@
+# Hidden files and folders (git, virtualenvs, tool caches)
+.*
+**/__pycache__
+data
+web/data
+results
+exports
+notes
+docs
+tests
+*.mp3
+*.wav
+*.flac
+*.sqlite
+*.log
+lineup_musical.md
