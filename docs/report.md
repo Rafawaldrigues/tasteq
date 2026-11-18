@@ -296,6 +296,63 @@ Late in a session that is roughly 5–10 s per answer for the GP. That is
 acceptable while the listener replays the next pair, but it is the first
 thing to optimize, for example by warm-starting the GP hyperparameters.
 
+### 4.8 The two-phase web study, simulated
+
+The public study (§5) asks each person a few questions on synthetic sounds,
+then on Creative Commons songs from styles they pick, in a quick (20
+answers), medium (36) or long (56) session. Before asking people for their
+time, `tasteq study` runs that exact protocol on simulated listeners over the
+real study tracks (8 synthetic sounds and 28 Free Music Archive songs,
+analyzed into one library, 4-d context). Five listeners range from one EQ for
+everything (`study_steady_bass`, `study_steady_vocal`: controls for invented
+adaptation) to one EQ per style, per song balance and per song. Full tables:
+[`docs/study.md`](study.md).
+
+Heard-song regret, mean over 40 simulated participants per cell:
+
+| model | quick (20) | medium (36) | long (56) |
+|---|---|---|---|
+| neural (§4.6) | 5.70 | 5.01 | 5.52 |
+| neural, global + per-track MLP | 4.40 | 3.59 | 4.51 |
+| neural, target curve (new) | 1.22 | 1.06 | 1.20 |
+| GP | 2.08 | 1.60 | 1.55 |
+| best single EQ (oracle) | 0.52 | 0.48 | 0.49 |
+
+1. **Nothing beats flat within this budget, on average.** The GP improves
+   steadily with answers (2.76 right after screening to 1.55 after 40 song
+   answers) and beats flat for the two steady listeners (0.61, 0.72), but the
+   balance-seeking listener, whose best EQ differs most between songs, costs
+   it 4.0. No model beat the best single EQ in more than 6 of 40 runs, so no
+   per-song adaptation is visible at these budgets.
+2. **Screening on synthetic sounds hurts the GP's song EQs.** Its regret right
+   after screening is 2.5–2.8. Synthetic sounds sit in a different region of
+   the context space than songs (their first context component is 0–0.5, the
+   songs' 0.4–1), and what the GP learns there extrapolates poorly.
+3. **A neural model with the right inductive bias is safe but slow.** Making
+   the network predict a preferred curve per track (a global target plus a
+   shrunk, context-dependent shift, with a learned per-band tolerance)
+   instead of an arbitrary utility cuts its regret from 4–6 to 1.1–1.2 and
+   keeps it close to flat, but it barely improves with more answers
+   (1.24 after screening, 1.20 after 40 song answers). The shift has to be
+   penalized in units of the listener's tolerance: penalized in raw input
+   units it absorbed the global taste and reversed it on unseen tracks (a
+   bug caught by a unit test and fixed before these numbers). A looser
+   penalty (0.5 instead of 2) changes the means by less than 0.1. In one
+   long run inspected before the fix, the model had found the right direction
+   (bass up) about halfway, and the bottleneck was visible: 9 of the last 20
+   answers were "no difference". The trust-region steps are too small to
+   hear, so many answers carry no information.
+
+What this changes:
+
+- The web study stays worth running, but it is a data-collection study, not a
+  demonstration that a person's EQ is learned in one session. Its blind test
+  should be read per mode, and a learned-vs-flat win rate near 50% at these
+  budgets is the expected outcome, not a bug.
+- The next model change is exploration with audible steps (fewer ties), then
+  a population prior trained on the study's own comparisons (§8), which is the
+  setting where a neural model fits.
+
 ## 5. Human blind test (protocol)
 
 Simulations show that the algorithm recovers *assumed* preferences. They do
@@ -352,6 +409,7 @@ pytest                                               # 140+ tests, incl. propert
 tasteq bench --config configs/main.yaml              # §4, ~3–4 h on 16 threads, resumable
 tasteq bench --config configs/ablation_space.yaml    # §4.5
 tasteq bench --config configs/ci.yaml                # short smoke run, as in CI
+tasteq study --config configs/study.yaml             # §4.8, ~3.5 h on 16 threads, resumable
 ```
 
 Every run writes `runs.jsonl` (one row per checkpoint), the figures and
@@ -365,5 +423,6 @@ are resumable.
    §4.3).
 3. Rerun the main benchmark from a single commit, including `gp_dct`, and
    switch the default space if §4.5 holds.
-4. Order-effect modelling, dynamic EQ per section, and a multi-user prior for
-   the cold start.
+4. Audible exploration steps (§4.8: about half the answers were ties), then a
+   population prior trained on the web study's comparisons for the cold start.
+5. Order-effect modelling and dynamic EQ per section.

@@ -1,0 +1,14 @@
+# Two-phase study (screening on synthetic sounds, then the person's chosen
+# styles) simulated in the three web-study modes, before asking real people.
+name: study
+seeds: 8
+modes:
+  rapida: {screening: 8, music: 12}
+  media: {screening: 12, music: 24}
+  longa: {screening: 16, music: 40}
+models:
+  - {name: gp, kind: gp}
+  - {name: neural, kind: neural}
+  - {name: adaptive_mlp, kind: neural_adaptive, params: {head: mlp, deviation_weight: 0.5}}
+  - {name: adaptive_curve, kind: neural_adaptive}
+  - {name: adaptive_curve_loose, kind: neural_adaptive, params: {deviation_weight: 0.5}}

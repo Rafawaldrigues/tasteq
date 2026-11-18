@@ -54,6 +54,34 @@ def bench(
 
 
 @app.command()
+def study(
+    config: Annotated[Path, typer.Option(exists=True, dir_okay=False, help="Study YAML.")] = Path(
+        "configs/study.yaml"
+    ),
+    out: Annotated[Path, typer.Option(help="Directory for results.")] = Path("results"),
+    workers: Annotated[
+        int | None, typer.Option(help="Parallel processes (default: CPUs - 2).")
+    ] = None,
+    report_only: Annotated[
+        bool, typer.Option(help="Skip running; rebuild the summary only.")
+    ] = False,
+) -> None:
+    """Simulate the two-phase web study (screening, then chosen styles) in each mode."""
+    from tasteq.study import StudyConfig, load_rows, run_study, summarize
+
+    cfg = StudyConfig.from_yaml(config)
+    out_dir = out / cfg.name
+    if not report_only:
+        run_study(cfg, out_dir, workers)
+    rows = load_rows(out_dir / "runs.jsonl")
+    if not rows:
+        raise typer.BadParameter(f"no results in {out_dir}")
+    summary = out_dir / "summary.md"
+    summary.write_text(summarize(rows))
+    typer.echo(summary.read_text())
+
+
+@app.command()
 def analyze(
     folder: Annotated[Path, typer.Argument(exists=True, file_okay=False, help="Music folder.")],
     db: DbOption = DEFAULT_DB,

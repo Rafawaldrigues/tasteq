@@ -68,8 +68,10 @@ def test_config_rejects_unknown_persona(tmp_path: Path) -> None:
 
 
 def test_shipped_configs_are_valid() -> None:
+    study_files = {"study.yaml", "study_tracks.yaml"}  # validated in test_study.py
     for path in Path("configs").glob("*.yaml"):
-        BenchConfig.from_yaml(path)
+        if path.name not in study_files:
+            BenchConfig.from_yaml(path)
 
 
 def test_load_runs_missing_file(tmp_path: Path) -> None:

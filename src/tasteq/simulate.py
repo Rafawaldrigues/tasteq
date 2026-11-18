@@ -193,12 +193,19 @@ PERSONAS: dict[str, Persona] = {
 }
 
 
+EXTRA_PERSONAS: dict[str, Persona] = {}
+"""Personas defined elsewhere (e.g. the study simulation), registered on first use."""
+
+
 def optimum(persona: Persona, context: FloatArray, spec: EQSpec = SPEC) -> tuple[FloatArray, float]:
     """Best gains inside the allowed range and their utility.
 
     Multi-start bounded search; exact enough to normalize regret. Cached per
     persona and context because the benchmark asks for it many times.
     """
+    if PERSONAS.get(persona.name, persona) is not persona:
+        raise ValueError(f"persona name {persona.name!r} is already taken")
+    EXTRA_PERSONAS.setdefault(persona.name, persona)
     return _optimum_cached(persona.name, tuple(np.round(context, 9)), spec)
 
 
@@ -206,7 +213,7 @@ def optimum(persona: Persona, context: FloatArray, spec: EQSpec = SPEC) -> tuple
 def _optimum_cached(
     name: str, context_key: tuple[float, ...], spec: EQSpec
 ) -> tuple[FloatArray, float]:
-    persona = PERSONAS[name]
+    persona = PERSONAS.get(name) or EXTRA_PERSONAS[name]
     context = np.array(context_key, dtype=np.float64)
     rng = np.random.default_rng(0)
     low, high = spec.min_gain_db, spec.max_gain_db
