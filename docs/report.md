@@ -343,15 +343,41 @@ Heard-song regret, mean over 40 simulated participants per cell:
    answers were "no difference". The trust-region steps are too small to
    hear, so many answers carry no information.
 
+**Fix: a minimum audible step.** Challengers closer than 2 dB RMS to the
+incumbent are now pushed out along the same direction
+(`TrustRegion.min_step_db`; `configs/study_audible.yaml`, 4 seeds, so 20
+simulated participants per cell):
+
+| model | quick (20) | medium (36) | long (56) | ties |
+|---|---|---|---|---|
+| neural, target curve | 1.09 | 1.02 | 0.96 | 4–5% |
+| GP | 1.83 | 1.60 | 1.55 | 3–8% |
+
+- For the target-curve model, ties fall from 27% of the answers (2-seed
+  check without the step) to about 5%; the GP had few ties either way. The
+  target-curve model now improves with every block of answers in the long
+  mode (1.24 after screening, 1.15, 1.10, 1.03, 1.02, 0.96), where before it
+  stayed flat (1.24 to 1.20). By the end of the long mode it is better than
+  flat for four of five listeners (0.51–0.90) and still worse for the
+  balance-seeking one (1.80).
+- The GP barely changes (1.55 in the long mode, as before) and stays worse
+  than flat on average.
+- Per-song adaptation is still not visible: the model beat the best single
+  EQ in 1 of 60 runs.
+- A 2-seed check of 2 vs 3 dB favoured 2 dB (0.83 vs 0.89, medium mode);
+  that check was optimistic next to the 4-seed run above.
+
 What this changes:
 
 - The web study stays worth running, but it is a data-collection study, not a
   demonstration that a person's EQ is learned in one session. Its blind test
   should be read per mode, and a learned-vs-flat win rate near 50% at these
   budgets is the expected outcome, not a bug.
-- The next model change is exploration with audible steps (fewer ties), then
-  a population prior trained on the study's own comparisons (§8), which is the
-  setting where a neural model fits.
+- With audible steps in place, the target-curve neural model is the study's
+  default candidate: it is the only one that ends better than flat on
+  average, and it never makes a song much worse. The next step is a
+  population prior trained on the study's own comparisons (§8), the setting
+  where a neural model fits best.
 
 ## 5. Human blind test (protocol)
 
@@ -410,6 +436,7 @@ tasteq bench --config configs/main.yaml              # §4, ~3–4 h on 16 threa
 tasteq bench --config configs/ablation_space.yaml    # §4.5
 tasteq bench --config configs/ci.yaml                # short smoke run, as in CI
 tasteq study --config configs/study.yaml             # §4.8, ~3.5 h on 16 threads, resumable
+tasteq study --config configs/study_audible.yaml     # §4.8 with audible steps, ~1 h
 ```
 
 Every run writes `runs.jsonl` (one row per checkpoint), the figures and
@@ -423,6 +450,6 @@ are resumable.
    §4.3).
 3. Rerun the main benchmark from a single commit, including `gp_dct`, and
    switch the default space if §4.5 holds.
-4. Audible exploration steps (§4.8: about half the answers were ties), then a
-   population prior trained on the web study's comparisons for the cold start.
+4. A population prior trained on the web study's comparisons for the cold
+   start (audible steps, §4.8, are done).
 5. Order-effect modelling and dynamic EQ per section.

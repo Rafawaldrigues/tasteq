@@ -43,3 +43,28 @@ Heard-song regret at the end of the longest mode, per listener:
 | study_by_style | 3.79 | 3.24 | 1.24 | 1.00 | 1.09 | 0.66 |
 | study_balance | 11.61 | 9.95 | 4.01 | 1.74 | 1.88 | 1.10 |
 | study_per_song | 4.08 | 2.89 | 1.15 | 1.00 | 0.99 | 0.67 |
+
+## With a minimum audible step (2 dB RMS)
+
+`tasteq study --config configs/study_audible.yaml`, 4 seeds.
+
+Normalized regret: 0 is the listener's best EQ for that song, 1 is no better than flat.
+
+| mode | model | after screening | heard songs | unheard songs | one EQ for all (ceiling) | beats one-EQ ceiling | ties |
+|---|---|---|---|---|---|---|---|
+| rapida | adaptive_curve | 1.17 | 1.09 | 1.17 | 0.41 | 1/20 | 4% |
+| rapida | gp | 2.15 | 1.83 | 2.37 | 0.41 | 0/20 | 3% |
+| media | adaptive_curve | 1.15 | 1.02 | 1.13 | 0.51 | 0/20 | 4% |
+| media | gp | 2.28 | 1.60 | 2.46 | 0.51 | 0/20 | 8% |
+| longa | adaptive_curve | 1.24 | 0.96 | 1.01 | 0.49 | 0/20 | 5% |
+| longa | gp | 2.59 | 1.55 | 1.87 | 0.49 | 0/20 | 6% |
+
+Heard-song regret at the end of the longest mode, per listener:
+
+| listener | adaptive_curve | gp | one EQ for all |
+|---|---|---|---|
+| study_per_song | 0.90 | 1.30 | 0.69 |
+| study_by_style | 0.87 | 1.11 | 0.60 |
+| study_steady_bass | 0.51 | 0.34 | 0.00 |
+| study_steady_vocal | 0.70 | 1.29 | 0.00 |
+| study_balance | 1.80 | 3.70 | 1.14 |
