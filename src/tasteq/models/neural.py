@@ -66,7 +66,7 @@ class NeuralBradleyTerry(PreferenceModel):
         self.weight_decay = weight_decay
         self.n_challenger_candidates = n_challenger_candidates
         self.prior_weight = prior_weight
-        self.members: list[nn.Sequential] = []
+        self.members: list[nn.Module] = []
         self._offsets = np.zeros(0)
 
     def _inputs(self, x: FloatArray, context: FloatArray) -> torch.Tensor:
@@ -86,7 +86,7 @@ class NeuralBradleyTerry(PreferenceModel):
         self.members = []
         for _ in range(self.n_members):
             torch.manual_seed(int(torch.randint(0, 2**31 - 1, (1,), generator=generator)))
-            member = _mlp(self.dim + self.context_dim, self.hidden)
+            member = self._make_member()
             sample = torch.randint(0, n, (n,), generator=generator)  # bootstrap
             optimizer = torch.optim.AdamW(
                 member.parameters(), lr=self.learning_rate, weight_decay=self.weight_decay
@@ -99,6 +99,7 @@ class NeuralBradleyTerry(PreferenceModel):
                 )
                 # Gaussian prior on utilities, f ~ N(0, 1 / (2 * prior_weight)).
                 loss = loss + self.prior_weight * (fa.square().mean() + fb.square().mean())
+                loss = loss + self._extra_loss(member, a[sample], b[sample], generator)
                 loss.backward()
                 optimizer.step()
             member.eval()
@@ -112,6 +113,16 @@ class NeuralBradleyTerry(PreferenceModel):
         observed = torch.cat([a, b])
         with torch.no_grad():
             self._offsets = np.array([float(m(observed).mean()) for m in self.members])
+
+    def _make_member(self) -> nn.Module:
+        return _mlp(self.dim + self.context_dim, self.hidden)
+
+    def _extra_loss(
+        self, member: nn.Module, a: torch.Tensor, b: torch.Tensor, generator: torch.Generator
+    ) -> torch.Tensor:
+        """Additional regularization for subclasses; none here."""
+        del member, a, b, generator
+        return torch.zeros(())
 
     def _member_utilities(self, x: FloatArray, context: FloatArray) -> FloatArray:
         """Centered utilities per member, shape ``(n_members, m)``."""

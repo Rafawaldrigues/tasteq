@@ -23,6 +23,7 @@ FAST: dict[str, dict[str, Any]] = {
     "random": {},
     "gp": {"num_restarts": 2, "raw_samples": 32},
     "neural": {"n_members": 3, "epochs": 60},
+    "neural_adaptive": {"n_members": 3, "epochs": 60},
 }
 
 
@@ -92,7 +93,7 @@ def test_rejects_wrong_dimensions(kind: str) -> None:
         model.best(np.zeros(5))
 
 
-@pytest.mark.parametrize("kind", ["gp", "neural"])
+@pytest.mark.parametrize("kind", ["gp", "neural", "neural_adaptive"])
 def test_learned_models_rank_a_clear_preference(kind: str) -> None:
     # Every comparison says "more bass is better": the model must agree.
     model = build(kind)
@@ -107,6 +108,25 @@ def test_learned_models_rank_a_clear_preference(kind: str) -> None:
     probe = np.full((2, SPACE.dim), 0.5)
     probe[0, :3] += 0.15
     mean, _ = model.predict(probe, CONTEXT)
+    assert mean[0] > mean[1]
+
+
+def test_adaptive_model_carries_taste_to_unheard_kinds_of_track() -> None:
+    # Answers only on one kind of sound (like a screening on synthetic tracks)
+    # must still shape the EQ for a very different track.
+    model = build("neural_adaptive")
+    rng = np.random.default_rng(0)
+    heard, unheard = np.array([0.05, 0.05]), np.array([0.95, 0.95])
+    comparisons = []
+    for _ in range(15):
+        low = rng.uniform(0.3, 0.7, SPACE.dim)
+        high = low.copy()
+        high[:3] = np.clip(high[:3] + 0.15, 0, 1)
+        comparisons.append(Comparison(high, low, heard, Outcome.A))
+    model.update(comparisons)
+    probe = np.full((2, SPACE.dim), 0.5)
+    probe[0, :3] += 0.15
+    mean, _ = model.predict(probe, unheard)
     assert mean[0] > mean[1]
 
 

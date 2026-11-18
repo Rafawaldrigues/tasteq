@@ -13,7 +13,7 @@ from tasteq.models.base import PreferenceModel
 from tasteq.models.random import RandomTrustRegion
 from tasteq.space import EQSpace
 
-MODEL_KINDS = ("random", "gp", "neural")
+MODEL_KINDS = ("random", "gp", "neural", "neural_adaptive")
 
 
 def make_model(
@@ -36,6 +36,10 @@ def make_model(
         from tasteq.models.neural import NeuralBradleyTerry
 
         cls = NeuralBradleyTerry
+    elif kind == "neural_adaptive":
+        from tasteq.models.adaptive import AdaptiveNeuralBradleyTerry
+
+        cls = AdaptiveNeuralBradleyTerry
     else:
         raise ValueError(f"unknown model kind {kind!r}; choose from {MODEL_KINDS}")
     return cls(space, context_dim, seed, trust_region, **params)
