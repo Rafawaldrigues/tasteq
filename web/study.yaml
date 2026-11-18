@@ -1,0 +1,62 @@
+# Settings of the public web study. Counts are per participant.
+#
+# Changing the counts only affects participants who start afterwards: each
+# participant's plan is stored with their data when they choose a mode.
+
+# Preference model, by kind name (see tasteq.models.make_model). Swapping the
+# model is a one-line change here; the study only uses Tuner.ask / answer /
+# best_gains / plausible_gains.
+model_kind: gp
+space: raw            # EQ search space: raw (10 bands) or dct
+
+modes:
+  quick:
+    label: Quick
+    minutes: 10
+    screening: 8      # phase 1: A/B questions on synthetic sounds
+    music: 12         # phase 2: A/B questions on the songs you chose
+    blind: 10         # blind test: frozen EQs, answers never train the model
+  medium:
+    label: Standard
+    minutes: 20
+    screening: 12
+    music: 24
+    blind: 16
+  long:
+    label: Long
+    minutes: 35
+    screening: 16
+    music: 40
+    blind: 24
+
+screening:
+  questions_per_sound: 2
+music:
+  questions_per_track: 4   # a block of questions on one song before moving on
+  min_tracks: 3            # never fewer different songs in phase 2
+  holdout_tracks: 2        # songs kept out of phase 2 and used only in the blind test
+  min_styles: 2
+
+# Blind-test pairs, cycled over the trials. "phase1" is the single EQ learned
+# from the synthetic sounds alone (the same curve for every song), so
+# learned vs phase1 asks whether adapting to each song helped.
+blind_pairs:
+  - [learned, flat]
+  - [learned, phase1]
+  - [learned, random]
+
+audio:
+  excerpt_seconds: 8
+  format: flac        # flac (lossless, compact), wav or mp3
+  synthetic_sounds: 12
+
+devices:
+  closed: Closed-back headphones
+  open: Open-back headphones
+  earbuds: Earbuds / in-ear
+  speakers: Speakers
+
+contact:
+  # Shown on the consent page for questions and data removal requests.
+  url: https://github.com/Rafawaldrigues/tasteq/issues
+  email: ""

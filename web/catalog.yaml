@@ -1,0 +1,376 @@
+# Music used in phase 2 and in the blind test of the web study.
+#
+# 28 tracks from the Free Music Archive (20 x CC BY 4.0, 8 x CC0 1.0), as
+# listed on FMA when checked on 2026-11-18. `file` is the name inside
+# TASTEQ_MUSIC_DIR; the audio itself is never committed.
+#
+# `style` is the coarse group participants choose from; `genre` is the finer
+# description shown in the credits. `explicit` flags tracks FMA marks as
+# radio-unsafe or with possibly explicit language; `ai_generated` flags the
+# track FMA reports as (partly) AI-generated, so analyses can set it apart.
+# CC BY requires credit, a license link and an indication of changes: the
+# site shows all three next to every track and on the credits page.
+# `notes` are shown on the credits page; `internal_notes` never leave the server.
+
+styles:
+  pop_rnb: Pop / R&B
+  electronic: Electronic / Dance
+  rock: Rock / Metal / Punk
+  hiphop: Hip-hop / Rap / Funk
+  afrobeat: Afrobeat / Afropop
+  jazz_folk: Jazz / Blues / Folk / Acoustic
+
+tracks:
+- id: 1
+  file: Creepzz - Say My Name.mp3
+  title: Say My Name
+  artist: Creepzz (feat. Kosi Sia)
+  style: afrobeat
+  genre: Pop / Afrobeats / rap
+  duration_s: 213
+  fma_url: https://freemusicarchive.org/music/creepzz/single/say-my-name/
+  license: CC BY 4.0
+  license_url: https://creativecommons.org/licenses/by/4.0/
+  explicit: false
+  ai_generated: false
+- id: 2
+  file: Anthem of Rain - Rock This House.mp3
+  title: Rock This House
+  artist: Anthem of Rain
+  style: electronic
+  genre: Pop / electronic / vocal dance
+  duration_s: 203
+  fma_url: https://freemusicarchive.org/music/anthem-of-rain/freedom/rock-this-house/
+  license: CC BY 4.0
+  license_url: https://creativecommons.org/licenses/by/4.0/
+  explicit: false
+  ai_generated: false
+- id: 3
+  file: Nexto - Alhamdulillah.mp3
+  title: Alhamdulillah
+  artist: Nexto
+  style: afrobeat
+  genre: Afrobeat / reggae-dub / African music
+  duration_s: 173
+  fma_url: https://freemusicarchive.org/music/nexto-2/single/alhamdulillah/
+  license: CC BY 4.0
+  license_url: https://creativecommons.org/licenses/by/4.0/
+  explicit: false
+  ai_generated: false
+- id: 4
+  file: Fat Tony Pistol - Got Yours If You Got Mine.mp3
+  title: Got Yours If You Got Mine
+  artist: Fat Tony Pistol
+  style: rock
+  genre: Punk / indie rock
+  duration_s: 178
+  fma_url: https://freemusicarchive.org/music/fat-tony-pistol/single/got-yours-if-you-got-mine/
+  license: CC BY 4.0
+  license_url: https://creativecommons.org/licenses/by/4.0/
+  explicit: true
+  ai_generated: false
+  notes: May contain explicit language.
+- id: 5
+  file: Avantist - Hexagon.mp3
+  title: Hexagon
+  artist: Avantist
+  style: rock
+  genre: Progressive metal / thrash / post-rock
+  duration_s: 117
+  fma_url: https://freemusicarchive.org/music/avantist/single/hexagon/
+  license: CC BY 4.0
+  license_url: https://creativecommons.org/licenses/by/4.0/
+  explicit: true
+  ai_generated: false
+  notes: Marked "Radio-Unsafe" on FMA (potentially explicit content).
+- id: 6
+  file: Sam Pablo - Futurist.mp3
+  title: Futurist
+  artist: Sam Pablo
+  style: rock
+  genre: Rock / metal
+  duration_s: 237
+  fma_url: https://freemusicarchive.org/music/sam-pablo/single/futurist/
+  license: CC BY 4.0
+  license_url: https://creativecommons.org/licenses/by/4.0/
+  explicit: false
+  ai_generated: false
+- id: 7
+  file: Troigo - Mi Dise\u00f1o.mp3
+  title: Mi Diseño
+  artist: Troigo
+  style: rock
+  genre: Indie rock / dance / Latin pop
+  duration_s: 263
+  fma_url: https://freemusicarchive.org/music/troigo/single/mi-diseno/
+  license: CC BY 4.0
+  license_url: https://creativecommons.org/licenses/by/4.0/
+  explicit: false
+  ai_generated: false
+- id: 8
+  file: Portrayal - You and Everyone.mp3
+  title: You and Everyone
+  artist: Portrayal
+  style: rock
+  genre: Post-punk / shoegaze / new wave / indie rock
+  duration_s: 275
+  fma_url: https://freemusicarchive.org/music/Portrayal/to-the-black-sea/you-and-everyone/
+  license: CC BY 4.0
+  license_url: https://creativecommons.org/licenses/by/4.0/
+  explicit: false
+  ai_generated: false
+- id: 9
+  file: Avantist - Tidalwave.mp3
+  title: Tidalwave
+  artist: Avantist
+  style: rock
+  genre: Indie rock / progressive rock / surf rock
+  duration_s: 177
+  fma_url: https://freemusicarchive.org/music/avantist/avantist/tidalwave/
+  license: CC BY 4.0
+  license_url: https://creativecommons.org/licenses/by/4.0/
+  explicit: false
+  ai_generated: false
+  internal_notes: A user comment on FMA reports a Twitch block; check for automated claims before launch.
+- id: 10
+  file: Creepzz - Me \u0026 You.mp3
+  title: Me & You
+  artist: Creepzz
+  style: afrobeat
+  genre: Afropop / rap / pop
+  duration_s: 210
+  fma_url: https://freemusicarchive.org/music/creepzz/single/me-you/
+  license: CC BY 4.0
+  license_url: https://creativecommons.org/licenses/by/4.0/
+  explicit: false
+  ai_generated: false
+- id: 11
+  file: Rap Barbie - Imma Love You.mp3
+  title: Imma Love You
+  artist: Rap Barbie
+  style: pop_rnb
+  genre: Pop / R&B / rap
+  duration_s: 162
+  fma_url: https://freemusicarchive.org/music/rap-barbie/single/imma-love-you/
+  license: CC BY 4.0
+  license_url: https://creativecommons.org/licenses/by/4.0/
+  explicit: false
+  ai_generated: false
+  notes: Produced by Kimosabe Peary (per the track description).
+- id: 12
+  file: Tiga Maine - Tiga Maine - Trenches (ft. Mseventy DeeTee \u0026 Sauwcy).mp3
+  title: Trenches (ft. Mseventy DeeTee & Sauwcy)
+  artist: Tiga Maine (feat. Mseventy DeeTee & Sauwcy)
+  style: hiphop
+  genre: Rap / hip-hop
+  duration_s: 151
+  fma_url: https://freemusicarchive.org/music/tiga-maine/single/tiga-maine-trenches-ft-mseventy-deetee-sauwcy/
+  license: CC BY 4.0
+  license_url: https://creativecommons.org/licenses/by/4.0/
+  explicit: false
+  ai_generated: false
+  notes: Produced by Deejay Boe (per the track description).
+- id: 13
+  file: Tiga Maine - Low (ft. Mseventy DeeTee).mp3
+  title: Low (ft. Mseventy DeeTee)
+  artist: Tiga Maine (feat. Mseventy DeeTee)
+  style: hiphop
+  genre: Hip-hop / rap / trap
+  duration_s: 118
+  fma_url: https://freemusicarchive.org/music/tiga-maine/single/low-ft-mseventy-deetee-1/
+  license: CC BY 4.0
+  license_url: https://creativecommons.org/licenses/by/4.0/
+  explicit: false
+  ai_generated: false
+  notes: Produced by Deejay Boe (per the track description).
+- id: 14
+  file: Amarent - Caught in the Middle.mp3
+  title: Caught in the Middle
+  artist: Amarent
+  style: pop_rnb
+  genre: Pop / R&B / chill-out
+  duration_s: 147
+  fma_url: https://freemusicarchive.org/music/amarent/free-soft-pop/caught-in-the-middle/
+  license: CC BY 4.0
+  license_url: https://creativecommons.org/licenses/by/4.0/
+  explicit: false
+  ai_generated: false
+- id: 15
+  file: Hotham - Love Me Back.mp3
+  title: Love Me Back
+  artist: Hotham
+  style: electronic
+  genre: Pop / electronic / dance / lounge
+  duration_s: 148
+  fma_url: https://freemusicarchive.org/music/hotham/single/love-me-back/
+  license: CC BY 4.0
+  license_url: https://creativecommons.org/licenses/by/4.0/
+  explicit: false
+  ai_generated: false
+  notes: Used under the CC BY 4.0 license shown on FMA.
+- id: 16
+  file: Atch - Atch - Read Your Mind (ft. Jason Walker).mp3
+  title: Read Your Mind (ft. Jason Walker)
+  artist: Atch (feat. Jason Walker)
+  style: electronic
+  genre: Pop / electronic / dance
+  duration_s: 163
+  fma_url: https://freemusicarchive.org/music/atch/single/atch-read-your-mind-ft-jason-walker/
+  license: CC BY 4.0
+  license_url: https://creativecommons.org/licenses/by/4.0/
+  explicit: false
+  ai_generated: false
+- id: 17
+  file: Amarent - Dance Away.mp3
+  title: Dance Away
+  artist: Amarent
+  style: pop_rnb
+  genre: Pop / ambient electronic / modern jazz
+  duration_s: 226
+  fma_url: https://freemusicarchive.org/music/amarent/free-soft-pop/dance-away-1/
+  license: CC BY 4.0
+  license_url: https://creativecommons.org/licenses/by/4.0/
+  explicit: false
+  ai_generated: false
+  notes: The vocal "Dance Away", not the ambient or instrumental edit.
+- id: 18
+  file: Adeline Yeo (HP) - \uc0ac\ub791\uc758 \ube48\ub3c4.mp3
+  title: 사랑의 빈도 (Love Frequency)
+  artist: Adeline Yeo (HP)
+  style: pop_rnb
+  genre: K-pop / experimental pop / synth-pop
+  duration_s: 223
+  fma_url: https://freemusicarchive.org/music/adeline-yeo-hp/single/-13/
+  license: CC BY 4.0
+  license_url: https://creativecommons.org/licenses/by/4.0/
+  explicit: false
+  ai_generated: true
+  notes: FMA states that this track, or part of it, was generated by AI.
+- id: 19
+  file: Anthem of Rain - Trying.mp3
+  title: Trying
+  artist: Anthem of Rain
+  style: electronic
+  genre: Pop / electronic / drum & bass
+  duration_s: 131
+  fma_url: https://freemusicarchive.org/music/anthem-of-rain/freedom/trying/
+  license: CC BY 4.0
+  license_url: https://creativecommons.org/licenses/by/4.0/
+  explicit: false
+  ai_generated: false
+  notes: Vocal version, not "Trying (Instrumental)".
+- id: 20
+  file: Creepzz - Creepzz X Nes Mburu Feat Kosi Sia-On My Mind.mp3
+  title: On My Mind
+  artist: Creepzz x Nes Mburu (feat. Kosi Sia)
+  style: afrobeat
+  genre: Afrobeat / hip-hop / African music
+  duration_s: 214
+  fma_url: https://freemusicarchive.org/music/creepzz/single/creepzz-x-nes-mburu-feat-kosi-sia-on-my-mind/
+  license: CC BY 4.0
+  license_url: https://creativecommons.org/licenses/by/4.0/
+  explicit: false
+  ai_generated: false
+  notes: Original version, not the Club Mix.
+- id: 21
+  file: Zane Little - Got a Feeling.mp3
+  title: Got a Feeling
+  artist: Zane Little
+  style: electronic
+  genre: Synth-pop / experimental pop
+  duration_s: 199
+  fma_url: https://freemusicarchive.org/music/zane-little/-2/got-a-feeling/
+  license: CC0 1.0
+  license_url: https://creativecommons.org/publicdomain/zero/1.0/
+  explicit: false
+  ai_generated: false
+- id: 22
+  file: HoliznaCC0 - Punk.mp3
+  title: Punk
+  artist: HoliznaCC0
+  style: rock
+  genre: Punk / garage rock / lo-fi instrumental rock
+  duration_s: 131
+  fma_url: https://freemusicarchive.org/music/holiznacc0/rock-montage/punk/
+  license: CC0 1.0
+  license_url: https://creativecommons.org/publicdomain/zero/1.0/
+  explicit: false
+  ai_generated: false
+  notes: Instrumental, despite the name.
+- id: 23
+  file: Maarten Schellekens - Sax and Piano (free track).mp3
+  title: Sax and Piano (free track)
+  artist: Maarten Schellekens
+  style: jazz_folk
+  genre: Jazz / instrumental easy listening
+  duration_s: 94
+  fma_url: https://freemusicarchive.org/music/maarten-schellekens/public-domain-1/sax-and-piano-free-track/
+  license: CC0 1.0
+  license_url: https://creativecommons.org/publicdomain/zero/1.0/
+  explicit: false
+  ai_generated: false
+  notes: Instrumental.
+- id: 24
+  file: HoliznaCC0 - Make Funk.mp3
+  title: Make Funk
+  artist: HoliznaCC0
+  style: hiphop
+  genre: Funk / deep funk / instrumental hip-hop beats
+  duration_s: 163
+  fma_url: https://freemusicarchive.org/music/holiznacc0/bassic/make-funk/
+  license: CC0 1.0
+  license_url: https://creativecommons.org/publicdomain/zero/1.0/
+  explicit: false
+  ai_generated: false
+  notes: Instrumental.
+- id: 25
+  file: HoliznaCC0 - House Of The Rising Sun.mp3
+  title: House Of The Rising Sun
+  artist: HoliznaCC0
+  style: jazz_folk
+  genre: Blues / folk / rock / americana
+  duration_s: 306
+  fma_url: https://freemusicarchive.org/music/holiznacc0/house-of-the-rising-sun/house-of-the-rising-sun/
+  license: CC0 1.0
+  license_url: https://creativecommons.org/publicdomain/zero/1.0/
+  explicit: false
+  ai_generated: false
+  notes: The CC0 dedication covers this specific recording by HoliznaCC0 only.
+- id: 26
+  file: HoliznaCC0 - Hard To Love.mp3
+  title: Hard To Love
+  artist: HoliznaCC0
+  style: jazz_folk
+  genre: Blues / lo-fi rock / soul and folk
+  duration_s: 245
+  fma_url: https://freemusicarchive.org/music/holiznacc0/music-from-the-vault/hard-to-love/
+  license: CC0 1.0
+  license_url: https://creativecommons.org/publicdomain/zero/1.0/
+  explicit: false
+  ai_generated: false
+- id: 27
+  file: Rita Braga - Ua Like No A Like.mp3
+  title: Ua Like No A Like
+  artist: Rita Braga
+  style: jazz_folk
+  genre: Historical song / vocal / acoustic arrangement
+  duration_s: 209
+  fma_url: https://freemusicarchive.org/music/Revitalize_Music_Contest/Revitalize_Music_Contest/11_Ua_Like_No_A_Like_3
+  license: CC0 1.0
+  license_url: https://creativecommons.org/publicdomain/zero/1.0/
+  explicit: false
+  ai_generated: false
+  notes: Song written by Alice Everett in 1882; this is the recording by Rita Braga.
+- id: 28
+  file: Maarten Schellekens - War.mp3
+  title: War
+  artist: Maarten Schellekens
+  style: pop_rnb
+  genre: Pop / singer-songwriter / vocal easy listening
+  duration_s: 129
+  fma_url: https://freemusicarchive.org/music/maarten-schellekens/public-domain-1/war-2/
+  license: CC0 1.0
+  license_url: https://creativecommons.org/publicdomain/zero/1.0/
+  explicit: false
+  ai_generated: false
+
