@@ -52,6 +52,7 @@ class ModelEntry(BaseModel):
     kind: str
     space: SpaceConfig = Field(default_factory=SpaceConfig)
     params: dict[str, Any] = Field(default_factory=dict)
+    min_step_db: float | None = None  # None: the experiment's default
 
 
 class BenchConfig(BaseModel):
@@ -68,6 +69,8 @@ class BenchConfig(BaseModel):
     personas: list[str] = Field(default_factory=lambda: list(PERSONAS))
     models: list[ModelEntry]
     reach_thresholds: list[float] = Field(default_factory=lambda: [0.5, 0.8])
+    # The main benchmark and the ablation predate minimum audible steps.
+    min_step_db: float = 0.0
 
     @classmethod
     def from_yaml(cls, path: Path) -> BenchConfig:
@@ -146,7 +149,7 @@ def run_one(
         space,
         config.context_dim,
         seed=_stable_seed("model", entry.name, persona_name, seed),
-        trust_region=TrustRegion(),
+        trust_region=TrustRegion(min_step_db=config.min_step_db),
         **entry.params,
     )
     answers = np.random.default_rng(_stable_seed("answers", persona_name, seed))

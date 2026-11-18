@@ -68,9 +68,8 @@ def test_config_rejects_unknown_persona(tmp_path: Path) -> None:
 
 
 def test_shipped_configs_are_valid() -> None:
-    study_files = {"study.yaml", "study_tracks.yaml"}  # validated in test_study.py
     for path in Path("configs").glob("*.yaml"):
-        if path.name not in study_files:
+        if not path.name.startswith("study"):  # validated in test_study.py
             BenchConfig.from_yaml(path)
 
 

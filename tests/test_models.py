@@ -47,7 +47,29 @@ def test_cold_start_recommends_flat_and_proposes_inside_cube(kind: str) -> None:
     a, b = model.suggest_pair(CONTEXT)
     assert a.shape == b.shape == (SPACE.dim,)
     assert np.all((b >= 0) & (b <= 1))
-    assert np.abs(b - a).max() <= model.trust_region.max_radius + 1e-9
+    step_db = np.sqrt(np.mean((SPACE.to_gains(b) - SPACE.to_gains(a)) ** 2))
+    assert step_db >= model.trust_region.min_step_db - 1e-6
+
+
+@pytest.mark.parametrize("kind", MODEL_KINDS)
+def test_questions_stay_audible_after_many_lost_challenges(kind: str) -> None:
+    # Every challenger loses, so the trust region shrinks to its floor; the
+    # two versions must still differ by at least the minimum audible step.
+    model = build(kind)
+    for _ in range(8):
+        a, b = model.suggest_pair(CONTEXT)
+        model.update([Comparison(a, b, CONTEXT, Outcome.A)])
+    a, b = model.suggest_pair(CONTEXT)
+    step_db = np.sqrt(np.mean((SPACE.to_gains(b) - SPACE.to_gains(a)) ** 2))
+    assert step_db >= model.trust_region.min_step_db - 1e-6
+
+
+def test_minimum_step_can_be_disabled() -> None:
+    model = make_model("random", SPACE, 2, trust_region=TrustRegion(min_step_db=0.0))
+    challenger = SPACE.flat + 0.01
+    np.testing.assert_array_equal(model._audible(SPACE.flat, challenger), challenger)
+    with pytest.raises(ValueError, match="min_step_db"):
+        TrustRegion(min_step_db=-1.0)
 
 
 @pytest.mark.parametrize("kind", MODEL_KINDS)

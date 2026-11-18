@@ -148,11 +148,13 @@ class NeuralBradleyTerry(PreferenceModel):
         incumbent = self.best(c)
         if not self.members:
             radius = self.trust_region.max_radius
-            return incumbent, self.trust_region.sample(incumbent, radius, 1, self.rng)[0]
+            challenger = self.trust_region.sample(incumbent, radius, 1, self.rng)[0]
+            return incumbent, self._audible(incumbent, challenger)
 
         radius = self._radius(incumbent, c)
-        candidates = self.trust_region.sample(
-            incumbent, radius, self.n_challenger_candidates, self.rng
+        candidates = self._audible(
+            incumbent,
+            self.trust_region.sample(incumbent, radius, self.n_challenger_candidates, self.rng),
         )
         sampled = self._member_utilities(candidates, c)[int(self.rng.integers(len(self.members)))]
         return incumbent, candidates[int(np.argmax(sampled))]

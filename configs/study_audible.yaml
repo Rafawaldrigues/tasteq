@@ -1,0 +1,13 @@
+# configs/study.yaml again with a 2 dB RMS minimum step between the two
+# versions of each question (the study default since then), for the two models
+# that stay usable; fewer seeds because the GP takes ~10 min per long session.
+name: study_audible
+seeds: 4
+min_step_db: 2.0
+modes:
+  rapida: {screening: 8, music: 12}
+  media: {screening: 12, music: 24}
+  longa: {screening: 16, music: 40}
+models:
+  - {name: gp, kind: gp}
+  - {name: adaptive_curve, kind: neural_adaptive}

@@ -1,6 +1,8 @@
 # Two-phase study (screening on synthetic sounds, then the person's chosen
 # styles) simulated in the three web-study modes, before asking real people.
 name: study
+# Run before minimum audible steps existed; kept reproducible with min_step_db 0.
+min_step_db: 0.0
 seeds: 8
 modes:
   rapida: {screening: 8, music: 12}

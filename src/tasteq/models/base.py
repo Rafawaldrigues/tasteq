@@ -148,6 +148,27 @@ class PreferenceModel(ABC):
         mean, std = self.predict(x, context)
         return mean - self.recommend_beta * std
 
+    def _audible(self, incumbent: FloatArray, challengers: FloatArray) -> FloatArray:
+        """Push challengers out to at least ``min_step_db`` RMS from the incumbent.
+
+        Works on one point or a batch of rows. The direction of each step is
+        kept; a challenger equal to the incumbent gets a random direction.
+        Clipping to the cube can leave a step near an edge slightly short.
+        """
+        step_db = self.trust_region.min_step_db
+        points = np.atleast_2d(np.asarray(challengers, dtype=np.float64))
+        if step_db <= 0.0:
+            return np.asarray(challengers, dtype=np.float64)
+        flat_gains = self.space.to_gains(incumbent)
+        delta = points - incumbent
+        tiny = np.linalg.norm(delta, axis=1) < 1e-9
+        delta[tiny] = self.rng.standard_normal((int(tiny.sum()), self.dim))
+        gain_delta = np.atleast_2d(self.space.to_gains(incumbent + delta)) - flat_gains
+        rms = np.sqrt(np.mean(gain_delta**2, axis=1))
+        scale = np.where(rms < step_db, step_db / np.maximum(rms, 1e-12), 1.0)
+        out = np.clip(incumbent + delta * scale[:, None], 0.0, 1.0)
+        return out if np.ndim(challengers) == 2 else out[0]
+
     def _observed_winners(self) -> FloatArray:
         winners = [c.winner for c in self.comparisons if c.winner is not None]
         if not winners:

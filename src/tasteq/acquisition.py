@@ -22,19 +22,28 @@ class TrustRegion:
     """Half-width of the search box around the incumbent, in unit-cube units.
 
     In the raw space the cube spans 20 dB per band, so the defaults allow
-    steps from ±1 dB (confident; about the smallest EQ change people reliably
-    hear) up to ±5 dB (exploring).
+    steps from ±1 dB up to ±5 dB (exploring).
+
+    ``min_step_db`` is the smallest difference between the two versions of a
+    question, as the RMS over bands of their gain difference. A box of ±1 dB
+    with independent bands gives pairs about 0.6 dB RMS apart, which most
+    listeners answer with "no difference": an answer that teaches the model
+    almost nothing. Challengers closer than this are pushed out along the same
+    direction (0 disables it).
     """
 
     min_radius: float = 0.05
     max_radius: float = 0.25
     failure_shrink: float = 0.7
+    min_step_db: float = 2.0
 
     def __post_init__(self) -> None:
         if not 0.0 < self.min_radius <= self.max_radius <= 1.0:
             raise ValueError("need 0 < min_radius <= max_radius <= 1")
         if not 0.0 < self.failure_shrink <= 1.0:
             raise ValueError("failure_shrink must be in (0, 1]")
+        if self.min_step_db < 0.0:
+            raise ValueError("min_step_db must be >= 0")
 
     def radius_for(self, uncertainty_ratio: float) -> float:
         """Map ``std(best) / std(prior)`` in [0, 1] to a radius.

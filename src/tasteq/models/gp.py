@@ -144,7 +144,7 @@ class PreferenceGP(PreferenceModel):
         if self.model is None:
             radius = self.trust_region.max_radius
             challenger = self.trust_region.sample(incumbent, radius, 1, self.rng)[0]
-            return incumbent, challenger
+            return incumbent, self._audible(incumbent, challenger)
 
         radius = self._radius(incumbent, c)
         low, high = self.trust_region.bounds(incumbent, radius)
@@ -169,4 +169,4 @@ class PreferenceGP(PreferenceModel):
         challenger = candidate.detach().numpy()[0, : self.dim].astype(np.float64)
         if np.linalg.norm(challenger - incumbent) < 1e-3:
             challenger = self.trust_region.sample(incumbent, radius, 1, self.rng)[0]
-        return incumbent, challenger
+        return incumbent, self._audible(incumbent, challenger)

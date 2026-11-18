@@ -45,7 +45,7 @@ from tasteq.analysis import diverse_subset
 from tasteq.bench import ModelEntry, normalized_regret
 from tasteq.dsp import FloatArray
 from tasteq.models import make_model
-from tasteq.preference import Comparison
+from tasteq.preference import Comparison, Outcome
 from tasteq.simulate import (
     BASS_BOOST,
     GENTLE_WARMTH,
@@ -238,6 +238,7 @@ class StudyConfig(BaseModel):
     min_unheard: int = 2
     styles_per_person: tuple[int, int] = (2, 3)
     eval_every: int = 4
+    min_step_db: float = 2.0
     personas: list[str] | None = None
     models: list[ModelEntry]
 
@@ -263,6 +264,7 @@ class StudyCheckpoint:
     heard_regret: float
     unheard_regret: float
     single_eq_regret: float
+    tie_rate: float
     seconds: float
 
 
@@ -312,7 +314,9 @@ def run_participant(
         space,
         context_dim,
         seed=_stable_seed("model", entry.name, persona_name, mode, seed),
-        trust_region=TrustRegion(),
+        trust_region=TrustRegion(
+            min_step_db=config.min_step_db if entry.min_step_db is None else entry.min_step_db
+        ),
         **entry.params,
     )
     answers = np.random.default_rng(_stable_seed("answers", persona_name, mode, seed))
@@ -328,10 +332,13 @@ def run_participant(
             np.mean([normalized_regret(persona, model.best_gains(c), c) for c in contexts])
         )
 
-    def ask(context: FloatArray) -> None:
+    def ask(context: FloatArray) -> Outcome:
         a, b = model.suggest_pair(context)
         outcome = persona.choose(space.to_gains(a), space.to_gains(b), context, answers)
         model.update([Comparison(a, b, context, outcome)])
+        return outcome
+
+    music_outcomes: list[Outcome] = []
 
     def checkpoint(n_music: int) -> StudyCheckpoint:
         return StudyCheckpoint(
@@ -344,6 +351,7 @@ def run_participant(
             regret(heard),
             regret(unheard),
             single_regret,
+            sum(o == Outcome.TIE for o in music_outcomes) / max(len(music_outcomes), 1),
             time.perf_counter() - start,
         )
 
@@ -354,7 +362,7 @@ def run_participant(
         )
     checkpoints = [checkpoint(0)]
     for step in range(1, counts.music + 1):
-        ask(heard[((step - 1) // config.music_per_track) % len(heard)])
+        music_outcomes.append(ask(heard[((step - 1) // config.music_per_track) % len(heard)]))
         if step % config.eval_every == 0 or step == counts.music:
             checkpoints.append(checkpoint(step))
     return checkpoints
@@ -435,6 +443,10 @@ def load_rows(path: Path) -> list[dict[str, Any]]:
 # --- Summary -------------------------------------------------------------------------------
 
 
+def _percent(value: float) -> str:
+    return "n/a" if math.isnan(value) else f"{value:.0%}"
+
+
 def summarize(rows: list[dict[str, Any]]) -> str:
     """Markdown tables: final scores per mode and model, overall and per listener."""
 
@@ -460,8 +472,8 @@ def summarize(rows: list[dict[str, Any]]) -> str:
         "Normalized regret: 0 is the listener's best EQ for that song, 1 is no better than flat.",
         "",
         "| mode | model | after screening | heard songs | unheard songs "
-        "| one EQ for all (ceiling) | beats one-EQ ceiling |",
-        "|---|---|---|---|---|---|---|",
+        "| one EQ for all (ceiling) | beats one-EQ ceiling | ties |",
+        "|---|---|---|---|---|---|---|---|",
     ]
     for mode in modes:
         for model in models:
@@ -472,7 +484,8 @@ def summarize(rows: list[dict[str, Any]]) -> str:
                 f"| {mode} | {model} | {mean([r['heard_regret'] for r in ss]):.2f} "
                 f"| {mean([r['heard_regret'] for r in fs]):.2f} "
                 f"| {mean([r['unheard_regret'] for r in fs]):.2f} "
-                f"| {mean([r['single_eq_regret'] for r in fs]):.2f} | {beats}/{len(fs)} |"
+                f"| {mean([r['single_eq_regret'] for r in fs]):.2f} | {beats}/{len(fs)} "
+                f"| {_percent(mean([r.get('tie_rate', float('nan')) for r in fs]))} |"
             )
     lines += ["", "Heard-song regret at the end of the longest mode, per listener:", ""]
     longest = modes[-1]

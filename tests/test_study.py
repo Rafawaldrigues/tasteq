@@ -30,8 +30,9 @@ def config(**overrides: object) -> StudyConfig:
 
 
 def test_shipped_study_config_is_valid() -> None:
-    cfg = StudyConfig.from_yaml(TRACKS_FILE.parent / "study.yaml")
-    assert set(cfg.modes) == {"rapida", "media", "longa"}
+    for name in ("study.yaml", "study_audible.yaml"):
+        cfg = StudyConfig.from_yaml(TRACKS_FILE.parent / name)
+        assert set(cfg.modes) == {"rapida", "media", "longa"}
 
 
 def test_study_tracks_cover_screening_sounds_and_styles() -> None:
@@ -76,6 +77,7 @@ def test_run_participant_scores_after_screening_and_along_the_music_phase() -> N
     assert all(r.n_screening == 4 for r in rows)
     assert all(np.isfinite(r.heard_regret) and np.isfinite(r.unheard_regret) for r in rows)
     assert len({r.single_eq_regret for r in rows}) == 1
+    assert all(0.0 <= r.tie_rate <= 1.0 for r in rows)
 
 
 def test_summary_lists_every_mode_and_model() -> None:

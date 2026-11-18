@@ -62,4 +62,4 @@ class RandomTrustRegion(PreferenceModel):
         """Incumbent vs. a uniform sample from the current trust region."""
         as_context(context, self.context_dim)
         challenger = self.trust_region.sample(self.incumbent, self.radius, 1, self.rng)[0]
-        return self.incumbent.copy(), challenger
+        return self.incumbent.copy(), self._audible(self.incumbent, challenger)
