@@ -18,6 +18,7 @@ binomial (sign) test.
 from __future__ import annotations
 
 import itertools
+from collections.abc import Sequence
 from dataclasses import dataclass
 
 import numpy as np
@@ -115,10 +116,16 @@ class PairResult:
         return self.wins / self.n if self.n else float("nan")
 
 
-def analyze(rows: list[dict[str, object]]) -> list[PairResult]:
-    """Run a one-sided exact binomial test per pair (is ``pair[0]`` preferred?)."""
+def analyze(
+    rows: list[dict[str, object]], pairs: Sequence[tuple[str, str]] = PAIRS
+) -> list[PairResult]:
+    """Run a one-sided exact binomial test per pair (is ``pair[0]`` preferred?).
+
+    ``pairs`` defaults to this module's two pairs; other front ends (the web
+    study adds learned vs the phase-1 EQ) pass their own.
+    """
     results = []
-    for pair in PAIRS:
+    for pair in pairs:
         wins = losses = ties = 0
         for row in rows:
             conditions = (row["condition_a"], row["condition_b"])
