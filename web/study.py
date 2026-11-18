@@ -301,6 +301,13 @@ class Participant:
                 raise StudyError("no songs available for these styles")
             self.state["styles"] = styles
             self._plan_music(pool)
+            # What the model predicts for each chosen song from phase 1 alone
+            # (no music answers yet). The blind test's "phase1" condition plays
+            # it, so learned-vs-phase1 measures what training on the songs added.
+            chosen = self.state["music_tracks"] + self.state["holdout_tracks"]
+            self.state["phase1_track_gains"] = {
+                str(i): _listify(self.tuner.best_gains(self._track(i))) for i in chosen
+            }
             self.tuner.session_id = self.storage.start_session(
                 "music", self.tuner.model.name, {"styles": styles}
             )
@@ -496,12 +503,6 @@ class Participant:
     def _finish_stage(self, stage: str) -> None:
         tuner = self.tuner
         if stage == "screening":
-            # Phase-1 "general taste": one curve, the mean of what the model
-            # recommends for the synthetic sounds heard. The blind test plays
-            # it on every song, so learned-vs-phase1 measures per-song adaptation.
-            heard = [self._track(i) for i in self.state["screening_tracks"]]
-            gains = np.mean([tuner.best_gains(t) for t in heard], axis=0)
-            self.state["phase1_gains"] = _listify(gains)
             self.state["phase1_n_comparisons"] = tuner.n_comparisons
             tuner.close()
             self.state.update(stage="styles", position=0)
@@ -523,13 +524,17 @@ class Participant:
         tracks = [self._track(i) for i in self.state["holdout_tracks"] + self.state["music_tracks"]]
         learned = {t.id: tuner.best_gains(t) for t in tracks}
         limit = tuner.space.spec.max_gain_db
-        phase1 = _gains(self.state["phase1_gains"])
+        phase1 = {int(k): _gains(v) for k, v in self.state["phase1_track_gains"].items()}
         plan = []
         for i in range(n_trials):
             track = tracks[i % len(tracks)]
             # Shift the pair each round so a track does not always meet the same pair.
             pair = pairs[(i + i // len(tracks)) % len(pairs)]
-            gains = {"learned": learned[track.id], "flat": np.zeros_like(phase1), "phase1": phase1}
+            gains = {
+                "learned": learned[track.id],
+                "flat": np.zeros_like(learned[track.id]),
+                "phase1": phase1[track.id],
+            }
             other = (
                 matched_random(learned[track.id], rng, limit)
                 if pair[1] == "random"
@@ -579,7 +584,7 @@ class Participant:
                 }
                 for r in analyze(rows, pairs)
             ]
-            phase1 = _gains(self.state["phase1_gains"])
+            phase1 = self.state["phase1_track_gains"]
             tracks = []
             for key, gains in self.state["learned_gains"].items():
                 info = self.track_info[int(key)]
@@ -589,13 +594,14 @@ class Participant:
                         "heard_in_music": int(key) in self.state["music_tracks"],
                         "gains": gains,
                         "curve": curve(_gains(gains)),
+                        "phase1_gains": phase1[key],
+                        "phase1_curve": curve(_gains(phase1[key])),
                     }
                 )
             return {
                 "code": self.code,
                 "freqs": [round(float(f), 1) for f in CURVE_FREQS_HZ],
                 "bands": list(DEFAULT_CENTER_FREQS_HZ),
-                "phase1": {"gains": _listify(phase1), "curve": curve(phase1)},
                 "tracks": tracks,
                 "blind": blind,
                 "n_comparisons": self.state.get("learned_n_comparisons", 0),

@@ -94,7 +94,12 @@ def read_participant(path: Path, stale_after: timedelta, now: datetime) -> dict[
             "holdout_tracks": ";".join(
                 str(tracks[i]["catalog_id"]) for i in state.get("holdout_tracks", [])
             ),
-            "phase1_gains": json.dumps(state.get("phase1_gains")),
+            "phase1_track_gains": json.dumps(
+                {
+                    tracks[int(k)]["catalog_id"]: v
+                    for k, v in state.get("phase1_track_gains", {}).items()
+                }
+            ),
             "phase1_n_comparisons": state.get("phase1_n_comparisons"),
             "learned_n_comparisons": state.get("learned_n_comparisons"),
             **{f"q_{k}": v for k, v in questionnaire.items()},

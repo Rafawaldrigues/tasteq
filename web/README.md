@@ -11,8 +11,9 @@ A public listening study built on the `tasteq` library. Each participant:
 5. **part 2, music:** answers A/B questions on excerpts of songs from those
    styles, a few questions per song, at least three songs;
 6. **part 3, blind test:** compares frozen EQs without being told which is
-   which: learned vs flat, learned vs the part-1 curve (one curve for every
-   song, so this pair asks whether adapting to each song helped) and learned vs
+   which: learned vs flat, learned vs the EQ the model predicted for the same
+   song right after part 1 (a snapshot stored with the participant, so this
+   pair asks what training on the songs added) and learned vs
    a random EQ of the same strength. At least two songs in the blind test were
    never heard in part 2 (generalization). Blind answers never train the model;
 7. fills a short questionnaire and sees their learned curves and blind score.

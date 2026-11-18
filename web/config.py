@@ -54,7 +54,7 @@ class AudioConfig(BaseModel):
 
     excerpt_seconds: float = Field(default=8.0, gt=1.0)
     format: Literal["flac", "wav", "mp3"] = "flac"
-    synthetic_sounds: int = Field(default=12, ge=2)
+    synthetic_sounds: int = Field(default=8, ge=2)
 
 
 class ContactConfig(BaseModel):

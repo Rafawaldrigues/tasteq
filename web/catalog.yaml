@@ -13,12 +13,12 @@
 # `notes` are shown on the credits page; `internal_notes` never leave the server.
 
 styles:
-  pop_rnb: Pop / R&B
+  pop: Pop / R&B
   electronic: Electronic / Dance
   rock: Rock / Metal / Punk
   hiphop: Hip-hop / Rap / Funk
   afrobeat: Afrobeat / Afropop
-  jazz_folk: Jazz / Blues / Folk / Acoustic
+  acoustic: Jazz / Blues / Folk / Acoustic
 
 tracks:
 - id: 1
@@ -148,7 +148,7 @@ tracks:
   file: Rap Barbie - Imma Love You.mp3
   title: Imma Love You
   artist: Rap Barbie
-  style: pop_rnb
+  style: hiphop
   genre: Pop / R&B / rap
   duration_s: 162
   fma_url: https://freemusicarchive.org/music/rap-barbie/single/imma-love-you/
@@ -187,7 +187,7 @@ tracks:
   file: Amarent - Caught in the Middle.mp3
   title: Caught in the Middle
   artist: Amarent
-  style: pop_rnb
+  style: pop
   genre: Pop / R&B / chill-out
   duration_s: 147
   fma_url: https://freemusicarchive.org/music/amarent/free-soft-pop/caught-in-the-middle/
@@ -224,7 +224,7 @@ tracks:
   file: Amarent - Dance Away.mp3
   title: Dance Away
   artist: Amarent
-  style: pop_rnb
+  style: pop
   genre: Pop / ambient electronic / modern jazz
   duration_s: 226
   fma_url: https://freemusicarchive.org/music/amarent/free-soft-pop/dance-away-1/
@@ -237,7 +237,7 @@ tracks:
   file: Adeline Yeo (HP) - \uc0ac\ub791\uc758 \ube48\ub3c4.mp3
   title: 사랑의 빈도 (Love Frequency)
   artist: Adeline Yeo (HP)
-  style: pop_rnb
+  style: pop
   genre: K-pop / experimental pop / synth-pop
   duration_s: 223
   fma_url: https://freemusicarchive.org/music/adeline-yeo-hp/single/-13/
@@ -276,7 +276,7 @@ tracks:
   file: Zane Little - Got a Feeling.mp3
   title: Got a Feeling
   artist: Zane Little
-  style: electronic
+  style: pop
   genre: Synth-pop / experimental pop
   duration_s: 199
   fma_url: https://freemusicarchive.org/music/zane-little/-2/got-a-feeling/
@@ -301,7 +301,7 @@ tracks:
   file: Maarten Schellekens - Sax and Piano (free track).mp3
   title: Sax and Piano (free track)
   artist: Maarten Schellekens
-  style: jazz_folk
+  style: acoustic
   genre: Jazz / instrumental easy listening
   duration_s: 94
   fma_url: https://freemusicarchive.org/music/maarten-schellekens/public-domain-1/sax-and-piano-free-track/
@@ -327,7 +327,7 @@ tracks:
   file: HoliznaCC0 - House Of The Rising Sun.mp3
   title: House Of The Rising Sun
   artist: HoliznaCC0
-  style: jazz_folk
+  style: acoustic
   genre: Blues / folk / rock / americana
   duration_s: 306
   fma_url: https://freemusicarchive.org/music/holiznacc0/house-of-the-rising-sun/house-of-the-rising-sun/
@@ -340,7 +340,7 @@ tracks:
   file: HoliznaCC0 - Hard To Love.mp3
   title: Hard To Love
   artist: HoliznaCC0
-  style: jazz_folk
+  style: acoustic
   genre: Blues / lo-fi rock / soul and folk
   duration_s: 245
   fma_url: https://freemusicarchive.org/music/holiznacc0/music-from-the-vault/hard-to-love/
@@ -352,7 +352,7 @@ tracks:
   file: Rita Braga - Ua Like No A Like.mp3
   title: Ua Like No A Like
   artist: Rita Braga
-  style: jazz_folk
+  style: acoustic
   genre: Historical song / vocal / acoustic arrangement
   duration_s: 209
   fma_url: https://freemusicarchive.org/music/Revitalize_Music_Contest/Revitalize_Music_Contest/11_Ua_Like_No_A_Like_3
@@ -365,7 +365,7 @@ tracks:
   file: Maarten Schellekens - War.mp3
   title: War
   artist: Maarten Schellekens
-  style: pop_rnb
+  style: acoustic
   genre: Pop / singer-songwriter / vocal easy listening
   duration_s: 129
   fma_url: https://freemusicarchive.org/music/maarten-schellekens/public-domain-1/war-2/

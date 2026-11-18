@@ -37,9 +37,10 @@ music:
   holdout_tracks: 2        # songs kept out of phase 2 and used only in the blind test
   min_styles: 2
 
-# Blind-test pairs, cycled over the trials. "phase1" is the single EQ learned
-# from the synthetic sounds alone (the same curve for every song), so
-# learned vs phase1 asks whether adapting to each song helped.
+# Blind-test pairs, cycled over the trials. "phase1" is the EQ the model
+# predicted for each song right after phase 1 (synthetic sounds only, snapshot
+# stored with the participant), so learned vs phase1 asks what training on the
+# songs themselves added.
 blind_pairs:
   - [learned, flat]
   - [learned, phase1]
@@ -48,7 +49,7 @@ blind_pairs:
 audio:
   excerpt_seconds: 8
   format: flac        # flac (lossless, compact), wav or mp3
-  synthetic_sounds: 12
+  synthetic_sounds: 8   # same files as `tasteq demo-library <dir> --tracks 8`
 
 devices:
   closed: Closed-back headphones

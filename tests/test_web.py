@@ -170,6 +170,9 @@ def test_shipped_config_and_catalog_are_valid() -> None:
     smallest_two = sum(sorted(per_style.values())[:2])
     assert smallest_two >= study.music.min_tracks + study.music.holdout_tracks
     assert [t.id for t in catalog.tracks if t.ai_generated] == [18]
+    # Same style tags and synthetic sounds as the model's simulation setup.
+    assert set(catalog.styles) == {"pop", "electronic", "rock", "hiphop", "afrobeat", "acoustic"}
+    assert study.audio.synthetic_sounds == 8
 
 
 def test_invalid_blind_pair_is_rejected() -> None:
@@ -222,6 +225,9 @@ def test_music_phase_uses_chosen_styles_and_holds_songs_out(
     assert len(state["music_tracks"]) >= settings.study.music.min_tracks
     assert len(state["holdout_tracks"]) == 2
     assert not set(state["music_tracks"]) & set(state["holdout_tracks"])
+    # The phase-1 snapshot covers every chosen song and predates any music answer.
+    assert set(state["phase1_track_gains"]) == {str(i) for i in chosen}
+    assert state["phase1_n_comparisons"] == settings.study.modes["quick"].screening
 
     music_tracks = {
         r[0]
@@ -281,7 +287,7 @@ def test_blind_test_is_frozen_and_never_trains_the_model(
         if "flat" in gains:
             assert not any(gains["flat"])
         if "phase1" in gains:
-            np.testing.assert_allclose(gains["phase1"], state["phase1_gains"])
+            np.testing.assert_allclose(gains["phase1"], state["phase1_track_gains"][str(track_id)])
         if "random" in gains:
             # Same RMS as the learned EQ, minus whatever the ±10 dB clip removes.
             rms = lambda g: float(np.sqrt(np.mean(np.square(g))))  # noqa: E731
@@ -301,7 +307,7 @@ def test_blind_test_is_frozen_and_never_trains_the_model(
     results = client.get(f"/api/p/{code}/results").json()
     assert [r["pair"] for r in results["blind"]] == [list(p) for p in settings.study.blind_pairs]
     assert sum(r["wins"] + r["losses"] + r["ties"] for r in results["blind"]) == len(trials)
-    assert len(results["phase1"]["curve"]) == len(results["freqs"])
+    assert all(len(t["phase1_curve"]) == len(results["freqs"]) for t in results["tracks"])
 
 
 # --- isolation and robustness ---------------------------------------------------

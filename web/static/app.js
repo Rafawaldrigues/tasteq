@@ -71,13 +71,13 @@ const PHASES = {
     eyebrow: 'Part 3 of 3',
     title: 'Blind test',
     name: 'Part 3 · Blind test',
-    body: (n) => `Finally, ${n} pairs that check what the model learned. One version always uses the EQ learned for you; the other uses no EQ, your part-1 curve, or a random EQ of the same strength. You are not told which is which, and these answers do not change the model. Some songs may be new to you.`,
+    body: (n) => `Finally, ${n} pairs that check what the model learned. One version always uses the EQ learned for you; the other uses no EQ, what the model predicted from part 1 alone, or a random EQ of the same strength. You are not told which is which, and these answers do not change the model. Some songs may be new to you.`,
   },
 };
 
 const PAIR_LABELS = {
   flat: 'no EQ',
-  phase1: 'your part-1 curve (same for every song)',
+  phase1: 'the EQ predicted from part 1 alone',
   random: 'a random EQ of the same strength',
 };
 
@@ -537,12 +537,12 @@ async function showResults() {
     $$('button', tabs).forEach((b) => b.setAttribute('aria-selected', String(b === button)));
     holder.textContent = '';
     holder.append(chart(results.freqs, [
-      { values: results.phase1.curve, cls: 'phase1' },
+      { values: item.phase1_curve, cls: 'phase1' },
       { values: item.curve, cls: 'learned' },
     ]));
     holder.append(el('div', { class: 'legend' },
       el('span', {}, el('i'), 'Learned for this song'),
-      el('span', {}, el('i', { class: 'dash' }), 'Part 1 (test sounds)')));
+      el('span', {}, el('i', { class: 'dash' }), 'Predicted after part 1')));
   };
   results.tracks.forEach((item, i) => {
     const track = tracksById[item.catalog_id];
