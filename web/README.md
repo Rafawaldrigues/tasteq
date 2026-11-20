@@ -89,10 +89,6 @@ between requests. A small machine with 2 vCPU and 2 GB RAM handles a handful
 of people at once; with `neural_adaptive` each answer retrains the model in about
 two seconds of CPU (the page shows "Saving… the model is choosing the next pair").
 
-- **Hugging Face Spaces** (Docker SDK): create a Space, enable persistent
-  storage (mounted at `/data`), push this repository with the Dockerfile moved
-  or copied to the root and `app_port: 8000` in the Space's README header.
-  Upload the songs to `/data/music`.
 - **Fly.io:** `fly launch --dockerfile web/Dockerfile --no-deploy`, then
   `fly volumes create study_data --size 3` and mount it at `/data` in
   `fly.toml`. Deploy, then copy the songs with `fly ssh sftp shell`
@@ -100,6 +96,38 @@ two seconds of CPU (the page shows "Saving… the model is choosing the next pai
 - **Render:** new Web Service from the repository, runtime Docker,
   Dockerfile path `web/Dockerfile`, and a disk mounted at `/data`. Upload the
   songs through the shell, then restart.
+
+### Free: Hugging Face Spaces
+
+The free CPU tier (2 vCPU, 16 GB) has no persistent disk: a restart, a
+rebuild or waking up after 48 h of inactivity starts from the image again.
+`web/space/Dockerfile` therefore bakes the songs and the template into the
+image, and `web/backup.py` keeps the participants in a **private dataset**:
+restored when the server starts, pushed every 5 minutes and on shutdown, and
+removed from it (history squashed) when someone deletes their answers.
+
+```bash
+pip install -e ".[web]"
+hf auth login                                   # a token with write access
+python -m web.deploy_space --dry-run /tmp/space # optional: inspect the folder
+TASTEQ_BACKUP_TOKEN=hf_... python -m web.deploy_space \
+    --space you/tasteq-study --music-dir fma_lineup \
+    --backup-repo you/tasteq-study-data
+```
+
+The script creates the Space (Docker SDK) and the private dataset, uploads
+the code, the Space header and the songs, sets the variable
+`TASTEQ_BACKUP_REPO` and stores `TASTEQ_BACKUP_TOKEN` as the Space secret
+`HF_TOKEN`. Use a fine-grained token that can only write to that dataset.
+The first build installs CPU torch and analyzes the songs (about 10 minutes);
+later restarts serve in seconds. Run the same command again to redeploy.
+
+To analyze, download the answers and export them as usual:
+
+```bash
+hf download you/tasteq-study-data --repo-type dataset --local-dir study-data
+TASTEQ_DATA_DIR=study-data python -m web.export --out exports/
+```
 
 Before going public: set `contact.email` in `study.yaml`, check the music
 licenses again (see the checklist in the project's lineup notes) and download

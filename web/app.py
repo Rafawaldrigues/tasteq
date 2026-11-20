@@ -12,8 +12,11 @@ participant's lock keeps their own requests in order.
 
 from __future__ import annotations
 
+import logging
 import os
 from collections import Counter
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 from typing import Annotated, Any, Literal
 
 from fastapi import FastAPI, HTTPException, Request
@@ -22,6 +25,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from tasteq.storage import Storage
+from web.backup import Backup
 from web.config import WEB_DIR, Settings
 from web.prepare import TRACKS_META_KEY
 from web.study import Registry, StudyError
@@ -110,13 +114,30 @@ def public_config(settings: Settings) -> dict[str, Any]:
 def create_app(settings: Settings | None = None) -> FastAPI:
     """Build the app; ``settings`` default to the environment."""
     settings = settings or Settings.from_env()
+    backup = Backup.from_env(settings.participants_dir)
+    if backup is not None:
+        try:
+            backup.restore()
+        except Exception:  # serve anyway; the backup thread retries the restore
+            logging.getLogger(__name__).exception("restoring participants failed")
     registry = Registry(settings)
     config = public_config(settings)
     registry.reference()  # render once at startup, not on the first visitor's click
     _limit_threads()
 
-    app = FastAPI(title="tasteq study", docs_url=None, redoc_url=None, openapi_url=None)
+    @asynccontextmanager
+    async def lifespan(_: FastAPI) -> AsyncIterator[None]:
+        if backup is not None:
+            backup.start()
+        yield
+        if backup is not None:
+            backup.stop()
+
+    app = FastAPI(
+        title="tasteq study", docs_url=None, redoc_url=None, openapi_url=None, lifespan=lifespan
+    )
     app.state.registry = registry
+    app.state.backup = backup
 
     @app.exception_handler(StudyError)
     def study_error(_: Request, error: StudyError) -> JSONResponse:
