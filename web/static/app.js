@@ -187,6 +187,18 @@ function updateProgress() {
   const fraction = status.total ? status.answered / status.total : 0;
   $('.progress-bar span').style.width = `${Math.round(100 * fraction)}%`;
   $('.progress-label').textContent = `${status.answered} / ${status.total}`;
+  // Stops on the journey line: where part 2 and the blind test begin.
+  const mode = config && status.mode ? config.modes[status.mode] : null;
+  const stops = $('.stops');
+  stops.textContent = '';
+  if (mode && status.total) {
+    const c = mode.counts;
+    [['Test sounds', 0], ['Your music', c.screening], ['Blind test', c.screening + c.music]].forEach(([label, at]) => {
+      const stop = el('li', { class: status.answered >= at ? 'reached' : '' }, el('span', { text: label }));
+      stop.style.left = `${(100 * at) / status.total}%`;
+      stops.append(stop);
+    });
+  }
 }
 
 async function route() {
@@ -206,7 +218,7 @@ async function route() {
 function showIntro(stage) {
   const phase = PHASES[stage];
   const screen = $('[data-screen="intro"]');
-  $('.eyebrow', screen).textContent = phase.eyebrow;
+  $('.meta', screen).textContent = phase.eyebrow;
   $('h1', screen).textContent = phase.title;
   $('.body', screen).textContent = phase.body(status.stage_total);
   screen.dataset.stage = stage;
@@ -316,6 +328,7 @@ async function playReference() {
     if (!error.superseded) alert(`Could not load the reference: ${error.message}`);
   } finally {
     button.disabled = false;
+    player.onchange(); // the label was frozen while loading
   }
 }
 
@@ -382,7 +395,12 @@ player.onchange = () => {
     button.classList.toggle('heard', Boolean(player.stats && player.stats.plays[i] > 0));
   });
   const ref = $('[data-action="ref"]');
-  if (ref && !ref.disabled) ref.textContent = player.current === -1 ? '▶ Play reference' : '■ Stop';
+  if (ref && !ref.disabled) {
+    ref.textContent = player.current === -1 ? 'Play reference' : 'Stop';
+    ref.dataset.playing = String(player.current !== -1);
+  }
+  const volume = $('[data-screen="volume"]');
+  if (volume) volume.dataset.playing = String(player.current !== -1 && Boolean(player.reference));
   if (question && player.stats && player.stats.plays.length === 2) {
     const both = player.stats.plays.every((n) => n > 0);
     if (both && $('.answer').disabled && $('.loading', screen).hidden) {

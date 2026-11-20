@@ -5,17 +5,24 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>tasteq listening study</title>
   <meta name="description" content="A listening study: teach an equalizer your personal sound taste with simple A/B choices.">
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M4 20h4v8H4zM11 12h4v16h-4zM18 6h4v22h-4zM25 14h4v14h-4z' fill='%233b6fe0'/%3E%3C/svg%3E">
+  <meta name="theme-color" content="#15112a">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2315112a'/%3E%3Cpath d='M6 21h3v5H6zM11.5 13h3v13h-3zM17.5 7h3v19h-3zM23 15h3v11h-3z' fill='%23ffb44c'/%3E%3C/svg%3E">
+  <link rel="preload" href="fonts/big-shoulders-display-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="fonts/figtree-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5.5v13l10.5-6.5z" fill="currentColor"/></symbol>
+  <symbol id="i-stop" viewBox="0 0 24 24"><rect x="6.5" y="6.5" width="11" height="11" rx="1.5" fill="currentColor"/></symbol>
+</svg>
 <header class="topbar">
   <a class="brand" href="#" data-action="home" aria-label="tasteq home">
-    <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M4 20h4v8H4zM11 12h4v16h-4zM18 6h4v22h-4zM25 14h4v14h-4z"/></svg>
-    tasteq <span class="muted">listening study</span>
+    <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M6 21h3v5H6zM11.5 13h3v13h-3zM17.5 7h3v19h-3zM23 15h3v11h-3z"/></svg>
+    <span class="wordmark">tasteq</span> <span class="tagline">listening study</span>
   </a>
   <div class="progress" hidden>
-    <div class="progress-bar"><span></span></div>
+    <div class="progress-bar"><span></span><ol class="stops" aria-hidden="true"></ol></div>
     <span class="progress-label"></span>
   </div>
 </header>
@@ -24,12 +31,19 @@
 
   <!-- Welcome + consent -->
   <section class="screen" data-screen="welcome">
-    <h1>Teach an equalizer your taste</h1>
+    <h1 class="poster">Teach an equalizer your&nbsp;taste</h1>
+    <p class="lineup" aria-label="Program: test sounds, your music, blind test">
+      <span class="tier-1">Test sounds</span>
+      <span class="sep" aria-hidden="true"></span>
+      <span class="tier-1">Your music</span>
+      <span class="sep" aria-hidden="true"></span>
+      <span class="tier-2">Blind test</span>
+    </p>
     <p class="lead">You will hear short excerpts in pairs and pick the one that sounds better to you.
       A model learns your preferred sound from your answers, first on simple test sounds,
       then on songs from styles you like. At the end, a blind test checks whether it really learned.</p>
 
-    <div class="card">
+    <div class="section">
       <h2>Before you start</h2>
       <ul class="facts">
         <li><strong>Headphones recommended.</strong> Use a quiet place. Each pair is matched in loudness, so pick what sounds <em>better</em>, not louder.</li>
@@ -41,7 +55,7 @@
       </ul>
     </div>
 
-    <form id="consent-form" class="card" autocomplete="off">
+    <form id="consent-form" class="section" autocomplete="off">
       <h2>Which device will you listen on?</h2>
       <div class="choices" id="devices"></div>
 
@@ -54,7 +68,7 @@
       <button class="primary big" type="submit">Start</button>
     </form>
 
-    <details class="card resume">
+    <details class="section resume">
       <summary>Resume with a code</summary>
       <form id="resume-form" class="inline">
         <input name="code" placeholder="XXXX-XXXX" maxlength="9" spellcheck="false" autocapitalize="characters" aria-label="Participant code">
@@ -69,8 +83,9 @@
     <h1>Set your volume</h1>
     <p class="lead">Play this excerpt and set your device's volume to a comfortable level, as you would normally listen to music.
       <strong>Please don't change it again until the end.</strong> All excerpts are played at this same loudness.</p>
-    <div class="card center">
-      <button class="play-ref primary big" type="button" data-action="ref">▶ Play reference</button>
+    <div class="stage center">
+      <span class="meter big-meter" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
+      <button class="play-ref primary big" type="button" data-action="ref">Play reference</button>
       <p class="muted small">The excerpt loops until you stop it.</p>
     </div>
     <p class="your-code">Your code: <code class="code"></code></p>
@@ -79,10 +94,10 @@
 
   <!-- Interstitial before each phase -->
   <section class="screen" data-screen="intro" hidden>
-    <p class="eyebrow"></p>
-    <h1></h1>
+    <h1 class="poster"></h1>
+    <p class="meta"></p>
     <div class="lead body"></div>
-    <div class="card how">
+    <div class="section how">
       <h2>How it works</h2>
       <ol>
         <li>Press <kbd>A</kbd> and <kbd>B</kbd> (or the keys <kbd>1</kbd> <kbd>2</kbd>) to switch between the two versions while the excerpt plays. Switch as often as you like.</li>
@@ -94,20 +109,24 @@
 
   <!-- A/B question -->
   <section class="screen" data-screen="question" hidden>
-    <p class="eyebrow phase-name"></p>
     <h1 class="track-title"></h1>
     <p class="track-credit muted small"></p>
+    <p class="meta phase-name"></p>
 
     <div class="ab" role="group" aria-label="Versions">
       <button class="version" type="button" data-version="0" aria-pressed="false">
-        <span class="letter">A</span><span class="state">Play</span>
+        <span class="letter">A</span>
+        <span class="meter" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span>
+        <span class="state">Play</span>
       </button>
       <button class="version" type="button" data-version="1" aria-pressed="false">
-        <span class="letter">B</span><span class="state">Play</span>
+        <span class="letter">B</span>
+        <span class="meter" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span>
+        <span class="state">Play</span>
       </button>
     </div>
     <div class="transport">
-      <button type="button" class="ghost" data-action="stop">■ Stop</button>
+      <button type="button" class="ghost icon" data-action="stop"><svg aria-hidden="true"><use href="#i-stop"/></svg>Stop</button>
       <span class="muted small hint">Listen to both versions to answer.</span>
     </div>
 
@@ -121,12 +140,12 @@
 
   <!-- Styles -->
   <section class="screen" data-screen="styles" hidden>
-    <p class="eyebrow">Part 1 done</p>
-    <h1>Which styles do you like?</h1>
+    <h1 class="poster">Build your lineup</h1>
+    <p class="meta">Part 1 done · Which styles do you like?</p>
     <p class="lead">Pick at least <span class="min-styles">2</span>. The next part uses songs from these styles.
       All songs are free-licensed (Creative Commons) from the Free Music Archive.</p>
     <form id="styles-form">
-      <div class="chips" id="styles"></div>
+      <div class="chips lineup-pick" id="styles"></div>
       <p class="muted small">Some songs may contain explicit lyrics; one was reported by its publisher as partly AI-generated.</p>
       <p class="error" hidden></p>
       <button class="primary big" type="submit">Continue</button>
@@ -135,9 +154,9 @@
 
   <!-- Questionnaire -->
   <section class="screen" data-screen="questionnaire" hidden>
-    <p class="eyebrow">Almost done</p>
-    <h1>A few last questions</h1>
-    <form id="questionnaire-form" class="card">
+    <h1 class="poster">A few last questions</h1>
+    <p class="meta">Almost done</p>
+    <form id="questionnaire-form" class="section">
       <fieldset>
         <legend>How hard was it to choose between the versions?</legend>
         <div class="scale" data-name="difficulty" data-low="Very easy" data-high="Very hard"></div>
@@ -174,16 +193,16 @@
 
   <!-- Results -->
   <section class="screen" data-screen="results" hidden>
-    <p class="eyebrow">Thank you!</p>
-    <h1>Your results</h1>
-    <div class="card verdict"></div>
-    <div class="card">
+    <h1 class="poster">Your results</h1>
+    <p class="meta">Thank you for listening</p>
+    <div class="verdict"></div>
+    <div class="section">
       <h2>Your learned EQ, song by song</h2>
       <p class="muted small">Boost (above 0 dB) or cut (below) per frequency. The dashed line is what the model predicted for the same song after part 1 (test sounds only). Songs marked “new” were only heard in the blind test.</p>
       <div class="track-tabs" role="tablist"></div>
       <div class="chart"></div>
     </div>
-    <div class="card">
+    <div class="section">
       <h2>Blind test</h2>
       <div class="blind-table"></div>
       <p class="muted small">A small number of trials is noisy; the study looks at everyone's answers together.</p>
@@ -194,14 +213,14 @@
 
   <!-- Left -->
   <section class="screen" data-screen="left" hidden>
-    <h1 class="left-title">You left the study</h1>
+    <h1 class="left-title poster">You left the study</h1>
     <p class="lead left-body"></p>
     <button type="button" class="ghost" data-action="home">Back to start</button>
   </section>
 
   <!-- Credits -->
   <section class="screen" data-screen="credits" hidden>
-    <h1>Music credits</h1>
+    <h1 class="poster">Music credits</h1>
     <p class="lead">The songs belong to their creators and are used under the licenses listed below.
       <strong>The equalization applied in this study changes the original audio</strong>: what you hear are modified excerpts, not the original recordings.
       Their use does not imply endorsement of this project by the artists.</p>
