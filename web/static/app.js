@@ -44,6 +44,38 @@ function showError(container, error) {
   box.hidden = !error;
 }
 
+// The browser's own validation bubbles and alert boxes speak the browser's
+// language, not the site's; every message the visitor sees comes from here.
+const REQUIRED_MESSAGES = {
+  device: 'Please choose the device you will listen on.',
+  mode: 'Please choose how long you have.',
+  adult: 'Please confirm that you are 18 or older.',
+  consent: 'Please agree to take part to continue.',
+  difficulty: 'Please rate how hard it was to choose.',
+  fatigue: 'Please rate how tired your ears were.',
+  experience: 'Please tell us your experience with music or audio.',
+  uses_eq: 'Please tell us whether you use an equalizer.',
+};
+
+function validate(form) {
+  const invalid = $$('input, textarea', form).find((input) => !input.checkValidity());
+  if (!invalid) { showError(form, null); return true; }
+  showError(form, new Error(REQUIRED_MESSAGES[invalid.name] || 'Please fill in this field.'));
+  const target = invalid.closest('fieldset, label') || invalid;
+  target.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  invalid.focus({ preventScroll: true });
+  return false;
+}
+
+let toastTimer = null;
+function notify(message) {
+  const toast = $('.toast');
+  toast.textContent = message;
+  toast.hidden = false;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { toast.hidden = true; }, 6000);
+}
+
 // ---------------------------------------------------------------- state
 
 let config = null;
@@ -57,9 +89,9 @@ const tracksById = {};
 const PHASES = {
   screening: {
     eyebrow: 'Part 1 of 3',
-    title: 'Test sounds',
-    name: 'Part 1 · Test sounds',
-    body: (n) => `First, ${n} pairs of simple synthetic sounds (no real music). They tell the model about your general taste: more or less bass, more or less brightness, and so on.`,
+    title: 'Instrumental loops',
+    name: 'Part 1 · Loops',
+    body: (n) => `First, ${n} pairs of short instrumental loops made for this study (no real songs yet). They tell the model about your general taste: more or less bass, more or less brightness, and so on.`,
   },
   music: {
     eyebrow: 'Part 2 of 3',
@@ -131,6 +163,7 @@ const player = {
     const ctx = this.context();
     if (this.current === index) { this.stop(); return; }
     if (this.current === -1) {
+      this.gains = [];
       this.sources = this.buffers.map((buffer, i) => {
         const source = ctx.createBufferSource();
         const gain = ctx.createGain();
@@ -146,9 +179,15 @@ const player = {
       this.startedAt = when - this.offset;
       this.segmentStart = when;
     } else {
+      // Short linear crossfade that ends exactly at 0 and 1: the other version
+      // is fully silent (an exponential approach never quite reaches 0).
       const t = ctx.currentTime;
-      this.gains[this.current].gain.setTargetAtTime(0, t, 0.006);
-      this.gains[index].gain.setTargetAtTime(1, t, 0.006);
+      this.gains.forEach((gain, i) => {
+        const param = gain.gain;
+        param.cancelScheduledValues(t);
+        param.setValueAtTime(param.value, t);
+        param.linearRampToValueAtTime(i === index ? 1 : 0, t + 0.012);
+      });
       this.stats.switches += 1;
     }
     this.current = index;
@@ -193,7 +232,7 @@ function updateProgress() {
   stops.textContent = '';
   if (mode && status.total) {
     const c = mode.counts;
-    [['Test sounds', 0], ['Your music', c.screening], ['Blind test', c.screening + c.music]].forEach(([label, at]) => {
+    [['Loops', 0], ['Your music', c.screening], ['Blind test', c.screening + c.music]].forEach(([label, at]) => {
       const stop = el('li', { class: status.answered >= at ? 'reached' : '' }, el('span', { text: label }));
       stop.style.left = `${(100 * at) / status.total}%`;
       stops.append(stop);
@@ -250,7 +289,7 @@ function renderWelcome() {
       el('input', { type: 'radio', name: 'mode', value: key, required: i === 0, checked: i === 0 }),
       el('strong', { text: mode.label }),
       el('span', { class: 'minutes', text: `~${mode.minutes} min` }),
-      el('span', { class: 'detail', text: `${c.screening + c.music + c.blind} pairs: ${c.screening} test sounds, ${c.music} songs, ${c.blind} blind` }),
+      el('span', { class: 'detail', text: `${c.screening + c.music + c.blind} pairs · ${c.screening} loops, ${c.music} songs, ${c.blind} blind` }),
     ));
   });
 
@@ -277,6 +316,7 @@ function renderWelcome() {
 $('#consent-form').addEventListener('submit', async (event) => {
   event.preventDefault();
   const form = event.currentTarget;
+  if (!validate(form)) return;
   const data = new FormData(form);
   const button = $('button[type="submit"]', form);
   button.disabled = true;
@@ -300,6 +340,7 @@ $('#resume-form').addEventListener('submit', async (event) => {
   event.preventDefault();
   const box = event.currentTarget.closest('details');
   const value = new FormData(event.currentTarget).get('code').trim().toUpperCase();
+  if (!value) { showError(box, new Error('Please enter your code, like K7QF-2MZD.')); return; }
   try {
     status = await api(`/p/${encodeURIComponent(value)}`);
     code = status.code;
@@ -325,7 +366,7 @@ async function playReference() {
     }
     player.play(0);
   } catch (error) {
-    if (!error.superseded) alert(`Could not load the reference: ${error.message}`);
+    if (!error.superseded) notify(`Could not load the reference: ${error.message}`);
   } finally {
     button.disabled = false;
     player.onchange(); // the label was frozen while loading
@@ -368,7 +409,7 @@ async function showQuestion() {
       credit.append(creditLine(track));
     } else {
       $('.track-title', screen).textContent = question.track.name;
-      credit.textContent = 'Synthetic test sound';
+      credit.textContent = 'Instrumental loop, made for this study';
     }
     await player.load(question.audio);
     $$('.version', screen).forEach((button) => { button.disabled = false; });
@@ -475,6 +516,7 @@ $('#styles-form').addEventListener('submit', async (event) => {
 $('#questionnaire-form').addEventListener('submit', async (event) => {
   event.preventDefault();
   const form = event.currentTarget;
+  if (!validate(form)) return;
   const data = new FormData(form);
   try {
     status = await api(`/p/${code}/questionnaire`, {
@@ -613,7 +655,7 @@ $('#leave-dialog').addEventListener('close', async () => {
       showLeft(false);
     }
   } catch (error) {
-    alert(`Could not leave: ${error.message}`);
+    notify(`Could not leave: ${error.message}`);
   }
 });
 
@@ -661,7 +703,7 @@ document.addEventListener('click', (event) => {
     player.stop();
     player.loadId = (player.loadId || 0) + 1;
     player.reference = false;
-    api(`/p/${code}/volume`, { method: 'POST' }).then((s) => { status = s; route(); }).catch((error) => alert(error.message));
+    api(`/p/${code}/volume`, { method: 'POST' }).then((s) => { status = s; route(); }).catch((error) => notify(error.message));
   } else if (action === 'intro-done') {
     introSeen[$('[data-screen="intro"]').dataset.stage] = true;
     showQuestion();

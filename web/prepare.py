@@ -21,8 +21,8 @@ import numpy as np
 from tasteq.analysis import ContextProjector, analyze_track
 from tasteq.library import CONTEXT_META_KEY
 from tasteq.storage import Storage
-from tasteq.synth import write_demo_library
 from web.config import Settings
+from web.loops import write_screening_loops
 
 log = logging.getLogger(__name__)
 
@@ -35,11 +35,14 @@ def synthetic_files(settings: Settings) -> list[Path]:
     """Return the synthetic sounds, writing them on first use."""
     folder = settings.synthetic_dir
     n = settings.study.audio.synthetic_sounds
-    existing = sorted(folder.glob("synthetic_*.wav"))
+    # Older templates used noisy stress signals (synthetic_*.wav); replace them.
+    for old in folder.glob("synthetic_*.wav"):
+        old.unlink()
+    existing = sorted(folder.glob("loop_*.wav"))
     if len(existing) != n:
         for path in existing:
             path.unlink()
-        return write_demo_library(folder, n_tracks=n, duration_s=SYNTHETIC_SECONDS, seed=0)
+        return write_screening_loops(folder, n_loops=n, duration_s=SYNTHETIC_SECONDS, seed=0)
     return existing
 
 
@@ -52,7 +55,7 @@ def prepare(settings: Settings, force: bool = False) -> Path:
 
     excerpt_s = settings.study.audio.excerpt_seconds
     sources: list[tuple[Path, dict[str, object]]] = [
-        (path, {"kind": "synthetic", "catalog_id": None, "name": f"Sound {i + 1}"})
+        (path, {"kind": "synthetic", "catalog_id": None, "name": f"Loop {i + 1}"})
         for i, path in enumerate(synthetic_files(settings))
     ]
     missing = []

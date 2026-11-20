@@ -5,9 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>tasteq listening study</title>
   <meta name="description" content="A listening study: teach an equalizer your personal sound taste with simple A/B choices.">
-  <meta name="theme-color" content="#15112a">
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2315112a'/%3E%3Cpath d='M6 21h3v5H6zM11.5 13h3v13h-3zM17.5 7h3v19h-3zM23 15h3v11h-3z' fill='%23ffb44c'/%3E%3C/svg%3E">
-  <link rel="preload" href="fonts/big-shoulders-display-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <meta name="theme-color" content="#121110">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='15' fill='%23121110'/%3E%3Ccircle cx='16' cy='16' r='11' fill='none' stroke='%23302d29'/%3E%3Ccircle cx='16' cy='16' r='6' fill='%23f2a344'/%3E%3Ccircle cx='16' cy='16' r='1.3' fill='%23121110'/%3E%3C/svg%3E">
+  <link rel="preload" href="fonts/jost-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="fonts/figtree-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="style.css">
 </head>
@@ -18,7 +18,7 @@
 </svg>
 <header class="topbar">
   <a class="brand" href="#" data-action="home" aria-label="tasteq home">
-    <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M6 21h3v5H6zM11.5 13h3v13h-3zM17.5 7h3v19h-3zM23 15h3v11h-3z"/></svg>
+    <span class="brand-disc" aria-hidden="true"></span>
     <span class="wordmark">tasteq</span> <span class="tagline">listening study</span>
   </a>
   <div class="progress" hidden>
@@ -31,17 +31,23 @@
 
   <!-- Welcome + consent -->
   <section class="screen" data-screen="welcome">
-    <h1 class="poster">Teach an equalizer your&nbsp;taste</h1>
-    <p class="lineup" aria-label="Program: test sounds, your music, blind test">
-      <span class="tier-1">Test sounds</span>
-      <span class="sep" aria-hidden="true"></span>
-      <span class="tier-1">Your music</span>
-      <span class="sep" aria-hidden="true"></span>
-      <span class="tier-2">Blind test</span>
-    </p>
-    <p class="lead">You will hear short excerpts in pairs and pick the one that sounds better to you.
-      A model learns your preferred sound from your answers, first on simple test sounds,
-      then on songs from styles you like. At the end, a blind test checks whether it really learned.</p>
+    <div class="hero">
+      <div class="hero-text">
+        <h1 class="poster">Teach an equalizer your&nbsp;taste</h1>
+        <p class="lead">You will hear short excerpts in pairs and pick the one that sounds better to you.
+          A model learns your preferred sound from your answers, first on short instrumental loops,
+          then on songs from styles you like. At the end, a blind test checks whether it really learned.</p>
+      </div>
+      <div class="sleeve-art" aria-hidden="true">
+        <div class="sleeve"><span class="sleeve-title">tasteq</span><span class="sleeve-sub">a listening study</span><span class="sleeve-bars"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span></div>
+        <span class="record out"><span class="disc"><span class="label"><span class="side">33⅓</span></span></span></span>
+      </div>
+    </div>
+    <ol class="tracklist" aria-label="How the study goes">
+      <li><span class="n">1</span><span class="t">Instrumental loops</span><span class="d">your general taste</span></li>
+      <li><span class="n">2</span><span class="t">Your music</span><span class="d">songs from styles you pick</span></li>
+      <li><span class="n">3</span><span class="t">Blind test</span><span class="d">did it learn?</span></li>
+    </ol>
 
     <div class="section">
       <h2>Before you start</h2>
@@ -55,7 +61,7 @@
       </ul>
     </div>
 
-    <form id="consent-form" class="section" autocomplete="off">
+    <form id="consent-form" class="section" autocomplete="off" novalidate>
       <h2>Which device will you listen on?</h2>
       <div class="choices" id="devices"></div>
 
@@ -70,7 +76,7 @@
 
     <details class="section resume">
       <summary>Resume with a code</summary>
-      <form id="resume-form" class="inline">
+      <form id="resume-form" class="inline" novalidate>
         <input name="code" placeholder="XXXX-XXXX" maxlength="9" spellcheck="false" autocapitalize="characters" aria-label="Participant code">
         <button type="submit">Resume</button>
       </form>
@@ -84,7 +90,7 @@
     <p class="lead">Play this excerpt and set your device's volume to a comfortable level, as you would normally listen to music.
       <strong>Please don't change it again until the end.</strong> All excerpts are played at this same loudness.</p>
     <div class="stage center">
-      <span class="meter big-meter" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
+      <span class="record ref" aria-hidden="true"><span class="disc"><span class="label"><span class="side">Reference</span></span></span></span>
       <button class="play-ref primary big" type="button" data-action="ref">Play reference</button>
       <p class="muted small">The excerpt loops until you stop it.</p>
     </div>
@@ -115,13 +121,13 @@
 
     <div class="ab" role="group" aria-label="Versions">
       <button class="version" type="button" data-version="0" aria-pressed="false">
-        <span class="letter">A</span>
-        <span class="meter" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span>
+<span class="record" aria-hidden="true"><span class="disc"><span class="label"><span class="letter">A</span><span class="side">Side A</span></span></span></span>
+        <span class="letter sr-only">A</span>
         <span class="state">Play</span>
       </button>
       <button class="version" type="button" data-version="1" aria-pressed="false">
-        <span class="letter">B</span>
-        <span class="meter" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span>
+<span class="record" aria-hidden="true"><span class="disc"><span class="label"><span class="letter">B</span><span class="side">Side B</span></span></span></span>
+        <span class="letter sr-only">B</span>
         <span class="state">Play</span>
       </button>
     </div>
@@ -140,12 +146,12 @@
 
   <!-- Styles -->
   <section class="screen" data-screen="styles" hidden>
-    <h1 class="poster">Build your lineup</h1>
-    <p class="meta">Part 1 done · Which styles do you like?</p>
+    <h1>Which styles do you like?</h1>
+    <p class="meta">Part 1 done</p>
     <p class="lead">Pick at least <span class="min-styles">2</span>. The next part uses songs from these styles.
       All songs are free-licensed (Creative Commons) from the Free Music Archive.</p>
-    <form id="styles-form">
-      <div class="chips lineup-pick" id="styles"></div>
+    <form id="styles-form" novalidate>
+      <div class="crates" id="styles"></div>
       <p class="muted small">Some songs may contain explicit lyrics; one was reported by its publisher as partly AI-generated.</p>
       <p class="error" hidden></p>
       <button class="primary big" type="submit">Continue</button>
@@ -154,9 +160,9 @@
 
   <!-- Questionnaire -->
   <section class="screen" data-screen="questionnaire" hidden>
-    <h1 class="poster">A few last questions</h1>
+    <h1>A few last questions</h1>
     <p class="meta">Almost done</p>
-    <form id="questionnaire-form" class="section">
+    <form id="questionnaire-form" class="section" novalidate>
       <fieldset>
         <legend>How hard was it to choose between the versions?</legend>
         <div class="scale" data-name="difficulty" data-low="Very easy" data-high="Very hard"></div>
@@ -198,7 +204,7 @@
     <div class="verdict"></div>
     <div class="section">
       <h2>Your learned EQ, song by song</h2>
-      <p class="muted small">Boost (above 0 dB) or cut (below) per frequency. The dashed line is what the model predicted for the same song after part 1 (test sounds only). Songs marked “new” were only heard in the blind test.</p>
+      <p class="muted small">Boost (above 0 dB) or cut (below) per frequency. The dashed line is what the model predicted for the same song after part 1 (loops only). Songs marked “new” were only heard in the blind test.</p>
       <div class="track-tabs" role="tablist"></div>
       <div class="chart"></div>
     </div>
@@ -213,19 +219,19 @@
 
   <!-- Left -->
   <section class="screen" data-screen="left" hidden>
-    <h1 class="left-title poster">You left the study</h1>
+    <h1 class="left-title">You left the study</h1>
     <p class="lead left-body"></p>
     <button type="button" class="ghost" data-action="home">Back to start</button>
   </section>
 
   <!-- Credits -->
   <section class="screen" data-screen="credits" hidden>
-    <h1 class="poster">Music credits</h1>
+    <h1>Music credits</h1>
     <p class="lead">The songs belong to their creators and are used under the licenses listed below.
       <strong>The equalization applied in this study changes the original audio</strong>: what you hear are modified excerpts, not the original recordings.
       Their use does not imply endorsement of this project by the artists.</p>
     <div class="credits-list"></div>
-    <p class="muted small">Source: <a href="https://freemusicarchive.org/" target="_blank" rel="noopener">Free Music Archive</a>. The test sounds of part 1 are synthetic and were generated for this study.</p>
+    <p class="muted small">Source: <a href="https://freemusicarchive.org/" target="_blank" rel="noopener">Free Music Archive</a>. The instrumental loops of part 1 were synthesized for this study.</p>
     <button type="button" class="ghost" data-action="back">Back</button>
   </section>
 </main>
@@ -248,6 +254,8 @@
     </div>
   </form>
 </dialog>
+
+<div class="toast" role="status" aria-live="polite" hidden></div>
 
 <script src="app.js"></script>
 </body>
